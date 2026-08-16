@@ -348,28 +348,30 @@
         chip.classList.add('has-badge');
       }
 
-      const cam = document.createElement('button');
-      cam.className = 'chip-cam';
-      cam.type = 'button';
-      cam.textContent = '📷';
-      cam.title = '写真を設定';
-      cam.addEventListener('click', ev => {
-        ev.stopPropagation();
-        if (!player) { toast('先に選手を選んでください'); return; }
-        openPhoto(player);
-      });
-      avatar.appendChild(cam);
+      // 📷と×は選手がいる駒にだけ付ける（空の駒は＋＝選手選択に専念させる）
+      if (player) {
+        const cam = document.createElement('button');
+        cam.className = 'chip-cam';
+        cam.type = 'button';
+        cam.textContent = '📷';
+        cam.title = '写真を設定';
+        cam.addEventListener('click', ev => {
+          ev.stopPropagation();
+          openPhoto(player);
+        });
+        avatar.appendChild(cam);
 
-      const del = document.createElement('button');
-      del.className = 'chip-del';
-      del.type = 'button';
-      del.textContent = '×';
-      del.title = 'この選手を外す';
-      del.addEventListener('click', ev => {
-        ev.stopPropagation();
-        removePlayer(key);
-      });
-      avatar.appendChild(del);
+        const del = document.createElement('button');
+        del.className = 'chip-del';
+        del.type = 'button';
+        del.textContent = '×';
+        del.title = 'この選手を外す';
+        del.addEventListener('click', ev => {
+          ev.stopPropagation();
+          removePlayer(key);
+        });
+        avatar.appendChild(del);
+      }
 
       chip.appendChild(avatar);
       if (player) {
