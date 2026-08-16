@@ -274,17 +274,18 @@ button, input, select { font-family: inherit; }
   .order-pane { padding: 12px 8px; border-radius: 12px; }
   .chip { min-width: 52px; }
   .chip-name { font-size: 10px; padding: 1px 5px; }
-  .c-no { width: 26px; }
+  .c-no { width: 24px; }
   .ord-no { font-size: 14px; }
-  .c-pos { width: 44px; }
+  .c-pos { width: 42px; }
   .ord-pos { font-size: 10px; padding: 2px 4px; white-space: normal; line-height: 1.25; }
-  .c-act { width: 150px; }
+  .c-act { width: 142px; }
   .ord-btns { gap: 2px; }
-  .ord-btns button { width: 34px; height: 34px; font-size: 11px; }
-  .ord-avatar { width: 42px; height: 42px; }
-  .ord-name { gap: 7px; }
+  .ord-btns button { width: 32px; height: 32px; font-size: 11px; }
+  .ord-avatar { width: 40px; height: 40px; }
+  .ord-name { gap: 6px; }
   .ord-pname { font-size: 13px; }
   .ord-sub { font-size: 10px; }
+  .ord-sub .ord-team { display: none; }   /* 球団名を省略して投打を最後まで出す */
   .order-row td { padding: 7px 3px; }
   .order-table th { padding: 0 3px 6px; }
 }

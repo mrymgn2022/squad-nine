@@ -430,9 +430,17 @@
       pn.textContent = player ? player.name.replace(/　/g, ' ') : '（未設定）';
       const sub = document.createElement('div');
       sub.className = 'ord-sub';
-      sub.textContent = player
-        ? '#' + player.number + '  ' + player.teamShort + '  ' + player.throws + '投' + player.batsLabel + '打'
-        : POS[key].full;
+      if (player) {
+        // 球団名は狭い画面ではCSSで非表示にする（投打を最後まで見せる）
+        sub.appendChild(document.createTextNode('#' + player.number + ' '));
+        const team = document.createElement('span');
+        team.className = 'ord-team';
+        team.textContent = player.teamShort + ' ';
+        sub.appendChild(team);
+        sub.appendChild(document.createTextNode(player.throws + '投' + player.batsLabel + '打'));
+      } else {
+        sub.textContent = POS[key].full;
+      }
       txt.appendChild(pn);
       txt.appendChild(sub);
       wrap.appendChild(av);
