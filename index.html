@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SQUAD NINE — NPB スタメンメーカー</title>
+<meta name="description" content="NPB12球団・全選手（育成含む）からスタメンを組んで、画像でシェアできる非公式ファンツール。">
+<meta name="theme-color" content="#12171e">
+
+<!-- OGP: og:image のURLは公開ドメイン確定後に絶対URLへ書き換えること -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="SQUAD NINE — NPB スタメンメーカー">
+<meta property="og:description" content="NPB全選手からスタメンを組んで画像でシェア。">
+<meta property="og:image" content="https://squadnine.jp/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <svg class="brand-mark" viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="50" r="46" fill="#f6f2e8"/>
+      <path d="M 21 18 Q 44 50 21 82" fill="none" stroke="#ff6b2c" stroke-width="6" stroke-linecap="round"/>
+      <path d="M 79 18 Q 56 50 79 82" fill="none" stroke="#ff6b2c" stroke-width="6" stroke-linecap="round"/>
+      <path d="M 25 27 l 7 3 M 23 39 l 8 2 M 23 51 l 8 0 M 23 62 l 8 -2 M 25 74 l 7 -3" stroke="#c9553e" stroke-width="3" stroke-linecap="round"/>
+      <path d="M 75 27 l -7 3 M 77 39 l -8 2 M 77 51 l -8 0 M 77 62 l -8 -2 M 75 74 l -7 -3" stroke="#c9553e" stroke-width="3" stroke-linecap="round"/>
+      <text x="50" y="52" text-anchor="middle" dominant-baseline="central" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="900" fill="#12171e">9</text>
+    </svg>
+    <span class="brand-name">SQUAD<em>NINE</em></span>
+  </div>
+  <div class="topbar-actions">
+    <button id="btnNotation" class="tbtn" title="守備位置の表記を切り替え">表記: <b id="notationLabel">漢字</b></button>
+    <button id="btnShare" class="tbtn primary">共有する</button>
+    <button id="btnMenu" class="tbtn icon" title="その他">…</button>
+  </div>
+</header>
+
+<div class="setupbar">
+  <div class="seg" id="dhSeg" role="group" aria-label="DH制">
+    <button class="seg-btn is-on" data-dh="1">DH あり</button>
+    <button class="seg-btn" data-dh="0">DH なし</button>
+  </div>
+  <div class="auto-group">
+    <select id="myTeam" class="team-select" title="チーム"></select>
+    <button id="btnAuto" class="tbtn auto-btn" type="button" title="選んだ球団のおすすめスタメンを自動配置">⚡ おまかせ</button>
+  </div>
+</div>
+
+<main class="layout">
+
+  <section class="field-pane">
+    <div class="field-wrap" id="fieldWrap">
+      <div class="field-bg">
+        <!-- 中身は field.js が生成する -->
+        <svg class="field-svg" viewBox="0 0 1000 1010" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
+      </div>
+      <div class="chips" id="chips"></div>
+      <button id="btnReset" class="reset-btn" type="button" title="盤面をリセット">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5V2L8 6l4 4V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+        リセット
+      </button>
+    </div>
+
+  </section>
+
+  <section class="order-pane">
+    <div class="pane-head">
+      <h2>打順</h2>
+    </div>
+    <table class="order-table">
+      <thead>
+        <tr><th class="c-no">打順</th><th class="c-pos">守備</th><th class="c-name">選手</th><th class="c-act"></th></tr>
+      </thead>
+      <tbody id="orderBody"></tbody>
+    </table>
+    <p class="hint">行をドラッグ、または ▲▼ で打順を入れ替えできます。</p>
+  </section>
+
+</main>
+
+<!-- ===== 選手選択モーダル ===== -->
+<div class="modal" id="pickerModal" hidden>
+  <div class="modal-card modal-lg">
+    <div class="modal-head">
+      <h3 id="pickerTitle">選手を選ぶ</h3>
+      <button class="modal-close" data-close>×</button>
+    </div>
+    <div class="picker-filters">
+      <input id="pickerSearch" class="search" type="search" placeholder="選手名で検索（例: 村上／おかもと は不可・漢字で）" autocomplete="off">
+      <div class="filter-row">
+        <select id="pickerTeam" class="mini-select"></select>
+        <select id="pickerGroup" class="mini-select">
+          <option value="投手">投手</option>
+          <option value="捕手">捕手</option>
+          <option value="内野手">内野手</option>
+          <option value="外野手">外野手</option>
+          <option value="all">全ポジション</option>
+        </select>
+        <label class="chk"><input type="checkbox" id="pickerIkusei" checked> 育成を含む</label>
+      </div>
+    </div>
+    <div class="picker-list" id="pickerList"></div>
+    <div class="picker-foot"><span id="pickerCount"></span></div>
+  </div>
+</div>
+
+<!-- ===== 写真モーダル ===== -->
+<div class="modal" id="photoModal" hidden>
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3>選手の写真</h3>
+      <button class="modal-close" data-close>×</button>
+    </div>
+    <div class="photo-body">
+      <div class="photo-target" id="photoTargetName"></div>
+
+      <div class="crop-area" id="cropArea">
+        <div class="crop-empty" id="cropEmpty">
+          ここに画像を<br>ドラッグ＆ドロップ<br>または <b>Ctrl+V</b> で貼り付け
+        </div>
+        <canvas id="cropCanvas" width="360" height="360"></canvas>
+      </div>
+
+      <label class="range-row" id="zoomRow" hidden>
+        <span>ズーム</span>
+        <input type="range" id="zoomRange" min="100" max="400" value="100">
+      </label>
+
+      <div class="photo-actions">
+        <label class="pbtn">
+          写真を選ぶ / 撮る
+          <input type="file" id="photoFile" accept="image/*" hidden>
+        </label>
+        <button class="pbtn" id="btnPhotoSearch">Webで画像を検索</button>
+        <button class="pbtn" id="btnPhotoPaste">貼り付け</button>
+        <button class="pbtn danger" id="btnPhotoRemove">削除</button>
+      </div>
+      <p class="hint small">検索した画像は、右クリック→「画像をコピー」してから<b>貼り付け</b>（Ctrl+V）してください。写真はこの端末内にのみ保存されます。</p>
+    </div>
+    <div class="modal-foot">
+      <button class="pbtn" data-close>キャンセル</button>
+      <button class="pbtn primary" id="btnPhotoSave">決定</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 共有モーダル ===== -->
+<div class="modal" id="shareModal" hidden>
+  <div class="modal-card modal-lg">
+    <div class="modal-head">
+      <h3>共有する</h3>
+      <button class="modal-close" data-close>×</button>
+    </div>
+    <div class="share-sizes" id="shareSizes"></div>
+    <div class="share-body">
+      <div class="share-preview" id="sharePreview"></div>
+    </div>
+    <div class="share-apps">
+      <button class="app-btn x" id="btnShareX" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.24 2.25h3.31l-7.23 8.26 8.5 11.24h-6.66l-5.21-6.82-5.97 6.82H1.67l7.73-8.84L1.25 2.25h6.83l4.71 6.23zm-1.16 17.52h1.83L7.08 4.13H5.12z"/></svg>
+        Xで共有
+      </button>
+      <button class="app-btn ig" id="btnShareIG" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2c3.2 0 3.58.01 4.85.07 3.25.15 4.73 1.66 4.88 4.88.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.15 3.22-1.63 4.73-4.88 4.88-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-3.25-.15-4.73-1.66-4.88-4.88C2.21 15.58 2.2 15.2 2.2 12s.01-3.58.07-4.85C2.42 3.93 3.9 2.42 7.15 2.27 8.42 2.21 8.8 2.2 12 2.2zm0 3.68a6.12 6.12 0 1 0 0 12.24 6.12 6.12 0 0 0 0-12.24zm0 10.09a3.97 3.97 0 1 1 0-7.94 3.97 3.97 0 0 1 0 7.94zm6.36-11.85a1.43 1.43 0 1 0 0 2.86 1.43 1.43 0 0 0 0-2.86z"/></svg>
+        Instagram
+      </button>
+      <button class="app-btn" id="btnShareNative" type="button" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 1 0-3-3c0 .24.04.47.09.7L8.04 9.81A2.99 2.99 0 0 0 3 12a3 3 0 0 0 5.04 2.19l7.12 4.16c-.05.21-.08.43-.08.65a2.92 2.92 0 1 0 2.92-2.92z"/></svg>
+        その他
+      </button>
+    </div>
+    <div class="modal-foot">
+      <span class="share-dim" id="shareDim"></span>
+      <button class="pbtn" id="btnShareLink">リンクをコピー</button>
+      <button class="pbtn" id="btnShareDownload">保存 (PNG)</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== メニュー ===== -->
+<div class="modal" id="menuModal" hidden>
+  <div class="modal-card">
+    <div class="modal-head"><h3>その他</h3><button class="modal-close" data-close>×</button></div>
+    <div class="menu-body">
+      <label class="menu-row">
+        <span>球場デザイン</span>
+        <select id="fieldStyle" class="mini-select"></select>
+      </label>
+      <button class="pbtn wide" id="btnCopyText">打順をテキストでコピー</button>
+      <button class="pbtn wide" id="btnResetPhotos">保存した写真をすべて削除</button>
+      <p class="hint small">スタメンと写真はブラウザ内 (localStorage) に自動保存されます。</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 初回訪問: 応援球団の選択 ===== -->
+<div class="welcome" id="welcome" hidden>
+  <div class="welcome-head">
+    <svg class="welcome-logo" viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="50" r="46" fill="#f6f2e8"/>
+      <path d="M 21 18 Q 44 50 21 82" fill="none" stroke="#ff6b2c" stroke-width="6" stroke-linecap="round"/>
+      <path d="M 79 18 Q 56 50 79 82" fill="none" stroke="#ff6b2c" stroke-width="6" stroke-linecap="round"/>
+      <text x="50" y="52" text-anchor="middle" dominant-baseline="central" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="900" fill="#12171e">9</text>
+    </svg>
+    <h1>あなたが応援する球団は？</h1>
+    <p>タップするとその球団のスタメンが表示されます</p>
+  </div>
+  <div class="welcome-grid" id="welcomeGrid"></div>
+  <button class="welcome-skip" id="welcomeSkip" type="button">あとで選ぶ</button>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="data/npb-players.js"></script>
+<script src="data/presets.js"></script>
+<script src="field.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
