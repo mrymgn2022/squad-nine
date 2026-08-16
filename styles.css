@@ -82,14 +82,20 @@ button, input, select { font-family: inherit; }
 
 /* ---------- field ---------- */
 .field-pane { min-width: 0; }
+/* 盤面はSVGの上部の余白(120/1010)を切り落として表示する（app.jsのBOARD_CROP_*と対応） */
 .field-wrap {
-  position: relative; width: 100%; aspect-ratio: 1000 / 1010;
+  position: relative; width: 100%; aspect-ratio: 1000 / 890;
 }
 .field-bg {
   position: absolute; inset: 0; border-radius: 16px; overflow: hidden;
   border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(0,0,0,.45);
 }
-.field-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.field-svg {
+  position: absolute; left: 0; width: 100%;
+  height: calc(100% * 1010 / 890);
+  top: calc(-100% * 120 / 890);
+  display: block;
+}
 .chips { position: absolute; inset: 0; }
 
 .chip {
@@ -120,13 +126,15 @@ button, input, select { font-family: inherit; }
   border: 1px solid rgba(0,0,0,.4); white-space: nowrap;
   box-shadow: 0 2px 6px rgba(0,0,0,.55);
 }
-.chip.has-badge .chip-name { margin-top: 12px; }
+.chip.has-badge .chip-name { margin-top: 11px; }
 .chip-name {
-  margin-top: 5px;
+  margin-top: -8px;                 /* アイコンの下端に重ねて縦の占有を減らす */
+  position: relative; z-index: 2;
   font-size: clamp(9px, 1.25vw, 13px); font-weight: 700; color: #fff;
-  background: rgba(8,12,17,.82); border-radius: 7px; padding: 2px 7px;
-  max-width: 165%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  background: rgba(8,12,17,.88); border-radius: 7px; padding: 2px 7px;
+  max-width: 150%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   text-align: center; line-height: 1.5;
+  box-shadow: 0 2px 6px rgba(0,0,0,.4);
 }
 .chip-cam, .chip-del {
   position: absolute; top: -3px; z-index: 2;
@@ -259,9 +267,13 @@ button, input, select { font-family: inherit; }
 /* 狭い画面: グラウンドと駒を大きく、打順表をコンパクトに */
 @media (max-width: 520px) {
   .layout { padding: 10px 6px 4px; gap: 12px; }
+  /* グラウンドは画面幅いっぱいまで広げる */
+  .field-pane { margin-left: -6px; margin-right: -6px; }
+  .field-bg { border-radius: 0; border-left: none; border-right: none; }
+  .reset-btn { top: 8px; right: 8px; }
   .order-pane { padding: 12px 8px; border-radius: 12px; }
-  .chip { min-width: 51px; }
-  .chip-name { font-size: 10px; padding: 1px 5px; margin-top: 4px; }
+  .chip { min-width: 52px; }
+  .chip-name { font-size: 10px; padding: 1px 5px; }
   .c-no { width: 26px; }
   .ord-no { font-size: 14px; }
   .c-pos { width: 44px; }

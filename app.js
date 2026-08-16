@@ -8,19 +8,21 @@
   const FIELD_W = 1000, FIELD_H = 1010;   // フィールドSVGの viewBox
   // 共有画像ではフィールドの上下の余白を切り抜いて使う
   const SHARE_CROP_Y0 = 125, SHARE_CROP_H = 830;
+  // 盤面（アプリ画面）は上の余白だけ切り落とす。下は捕手の名前ラベルの分を残す
+  const BOARD_CROP_Y0 = 120, BOARD_CROP_H = 890;
 
   const POSITIONS = [
     { key: 'P',  num: 1, kanji: '投', kana: 'ピッチャー',   full: '投手',   group: '投手',   x: 50,   y: 61.6 },
     { key: 'C',  num: 2, kanji: '捕', kana: 'キャッチャー', full: '捕手',   group: '捕手',   x: 50,   y: 86.7 },
-    { key: '1B', num: 3, kanji: '一', kana: 'ファースト',   full: '一塁手', group: '内野手', x: 67.6, y: 59.2 },
-    { key: '2B', num: 4, kanji: '二', kana: 'セカンド',     full: '二塁手', group: '内野手', x: 62.0, y: 46.1 },
-    { key: '3B', num: 5, kanji: '三', kana: 'サード',       full: '三塁手', group: '内野手', x: 32.4, y: 59.2 },
-    { key: 'SS', num: 6, kanji: '遊', kana: 'ショート',     full: '遊撃手', group: '内野手', x: 38.0, y: 46.1 },
+    { key: '1B', num: 3, kanji: '一', kana: 'ファースト',   full: '一塁手', group: '内野手', x: 67.6, y: 61.4 },
+    { key: '2B', num: 4, kanji: '二', kana: 'セカンド',     full: '二塁手', group: '内野手', x: 62.0, y: 44.6 },
+    { key: '3B', num: 5, kanji: '三', kana: 'サード',       full: '三塁手', group: '内野手', x: 32.4, y: 61.4 },
+    { key: 'SS', num: 6, kanji: '遊', kana: 'ショート',     full: '遊撃手', group: '内野手', x: 38.0, y: 44.6 },
     { key: 'LF', num: 7, kanji: '左', kana: 'レフト',       full: '左翼手', group: '外野手', x: 21.2, y: 36.8 },
     { key: 'CF', num: 8, kanji: '中', kana: 'センター',     full: '中堅手', group: '外野手', x: 50,   y: 28.5 },
     { key: 'RF', num: 9, kanji: '右', kana: 'ライト',       full: '右翼手', group: '外野手', x: 78.8, y: 36.8 },
     // DHは一塁側ファウルゾーンの端（フェンス外の余白）に置く
-    { key: 'DH', num: 0, kanji: '指', kana: 'DH',           full: '指名打者', group: null,   x: 78.5, y: 70.5 }
+    { key: 'DH', num: 0, kanji: '指', kana: 'DH',           full: '指名打者', group: null,   x: 83.5, y: 72.0 }
   ];
 
   const FIELD_STYLES = (window.FIELD && window.FIELD.styles) || [{ id: 'classic', label: '標準' }];
@@ -323,7 +325,8 @@
       const chip = document.createElement('div');
       chip.className = 'chip' + (player ? ' has-player' : ' empty');
       chip.style.left = p.x + '%';
-      chip.style.top = p.y + '%';
+      // 盤面は上部をクロップして表示しているので座標を写像する
+      chip.style.top = (((p.y / 100) * FIELD_H - BOARD_CROP_Y0) / BOARD_CROP_H * 100) + '%';
       chip.style.setProperty('--team', teamColor(player));
       chip.dataset.pos = key;
       chip.title = p.full + ' を選ぶ';
