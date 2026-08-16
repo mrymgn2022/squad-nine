@@ -55,6 +55,18 @@
   const DEFAULT_ORDER_DH  = ['CF', 'SS', 'RF', '3B', '1B', 'LF', 'DH', '2B', 'C'];
   const DEFAULT_ORDER_NODH = ['CF', 'SS', 'RF', '3B', '1B', 'LF', '2B', 'C', 'P'];
 
+  // 表示用の短縮登録名（登録名が長すぎて枠に入らない選手のみ）
+  const DISPLAY_NAME_OVERRIDES = {
+    '53755138': 'スチュワートJr',  // スチュワート・ジュニア
+    '93195150': 'モイセエフ'       // モイセエフ　ニキータ
+  };
+
+  /** 画面表示用の選手名（全角スペースを半角に、長すぎる名前は短縮形） */
+  function displayName(player) {
+    if (!player) return '';
+    return DISPLAY_NAME_OVERRIDES[player.id] || player.name.replace(/　/g, ' ');
+  }
+
   // 新聞略記（狭い画面の打順表で使う）
   const TEAM_ABBR = {
     g: '巨', t: '神', db: 'De', c: '広', s: 'ヤ', d: '中',
@@ -383,7 +395,7 @@
       if (player) {
         const name = document.createElement('div');
         name.className = 'chip-name';
-        name.textContent = player.name.replace(/　/g, ' ');
+        name.textContent = displayName(player);
         chip.appendChild(name);
       } else {
         // 空きポジションは ＋ マークだけ（文字は出さない）
@@ -432,7 +444,7 @@
       txt.className = 'ord-text';
       const pn = document.createElement('div');
       pn.className = 'ord-pname' + (player ? '' : ' is-empty');
-      pn.textContent = player ? player.name.replace(/　/g, ' ') : '（未設定）';
+      pn.textContent = player ? displayName(player) : '（未設定）';
       const sub = document.createElement('div');
       sub.className = 'ord-sub';
       if (player) {
@@ -487,12 +499,6 @@
         btns.appendChild(del);
       }
 
-      // タッチ端末用のドラッグハンドル（iOSのリスト編集と同じ作法）
-      const handle = document.createElement('button');
-      handle.type = 'button'; handle.className = 'drag-handle'; handle.textContent = '≡';
-      handle.title = 'ドラッグで打順を入れ替え';
-      btns.appendChild(handle);
-
       tdAct.appendChild(btns);
 
       tr.appendChild(tdNo); tr.appendChild(tdPos); tr.appendChild(tdName); tr.appendChild(tdAct);
@@ -522,10 +528,9 @@
   function attachRowDrag(row, fromIdx) {
     row.addEventListener('pointerdown', e => {
       if (e.button !== undefined && e.button !== 0) return;
-      const onHandle = !!(e.target.closest && e.target.closest('.drag-handle'));
-      if (!onHandle && e.target.closest('button')) return;         // ▲▼×📷はそのまま
-      // マウス: 5px動いたらドラッグ / ハンドル: 即ドラッグ / 行の長押し(タッチ): 220msで持ち上げ
-      const mode = e.pointerType === 'mouse' ? 'threshold' : (onHandle ? 'immediate' : 'longpress');
+      if (e.target.closest('button')) return;                      // ▲▼×📷はそのまま
+      // マウス: 5px動いたらドラッグ / タッチ: 220msの長押しで持ち上げ
+      const mode = e.pointerType === 'mouse' ? 'threshold' : 'longpress';
       startRowDrag(e, row, fromIdx, mode);
     });
   }
@@ -1144,7 +1149,7 @@
 
       // 名前
       if (player) {
-        const nm = player.name.replace(/　/g, ' ');
+        const nm = displayName(player);
         const nh = 30 * fz;
         const nw = nm.length * 16 * fz + 18 * fz;
         parts.push('<rect x="' + (cx - nw / 2) + '" y="' + (cy + R + nameTop) + '" width="' + nw + '" height="' + nh + '" rx="' + (8 * fz) + '" fill="rgba(8,12,17,0.85)"/>');
@@ -1161,7 +1166,7 @@
         key: key,
         player: player,
         pos: posLabel(key),
-        name: player ? player.name.replace(/　/g, ' ') : '（未設定）',
+        name: player ? displayName(player) : '（未設定）',
         sub: player
           ? '#' + player.number + '  ' + player.teamShort + '  ' + player.throws + '投' + player.batsLabel + '打'
           : POS[key].full,
@@ -1379,9 +1384,14 @@
   // ============================================================
   // その他の操作
   // ============================================================
+  function syncNotationUi() {
+    el.notationLabel.textContent = state.notation === 'kanji' ? '漢字' : 'カナ';
+    document.body.classList.toggle('nota-kana', state.notation === 'kana');
+  }
+
   $('#btnNotation').addEventListener('click', () => {
     state.notation = state.notation === 'kanji' ? 'kana' : 'kanji';
-    el.notationLabel.textContent = state.notation === 'kanji' ? '漢字' : 'カナ';
+    syncNotationUi();
     saveLineup();
     renderAll();
   });
@@ -1556,7 +1566,7 @@
     const fs = $('#fieldStyle');
     fs.innerHTML = FIELD_STYLES.map(f => '<option value="' + f.id + '">' + f.label + '</option>').join('');
     fs.value = state.fieldStyle;
-    el.notationLabel.textContent = state.notation === 'kanji' ? '漢字' : 'カナ';
+    syncNotationUi();
     updateDhSeg();
     renderFieldArt();
     renderAll();
