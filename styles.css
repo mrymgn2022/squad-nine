@@ -292,6 +292,16 @@ body.dragging-order { user-select: none; -webkit-user-select: none; cursor: grab
 
 /* 狭い画面: グラウンドと駒を大きく、打順表をコンパクトに */
 @media (max-width: 520px) {
+  /* 上部バーが詰まって右端の「…」が切れないように全体を圧縮 */
+  .topbar { padding: 8px 10px; gap: 8px; }
+  .brand { gap: 6px; min-width: 0; }
+  .brand-mark { width: 21px; height: 21px; }
+  .brand-name { font-size: 14px; white-space: nowrap; }
+  .topbar-actions { gap: 5px; flex: 0 0 auto; }
+  .tbtn { padding: 7px 8px; font-size: 12px; border-radius: 8px; }
+  .tbtn.icon { padding: 7px 9px; }
+  .setupbar { padding: 8px 10px; gap: 8px; }
+
   .layout { padding: 10px 6px 4px; gap: 12px; }
   /* グラウンドは画面幅いっぱいまで広げる */
   .field-pane { margin-left: -6px; margin-right: -6px; }
