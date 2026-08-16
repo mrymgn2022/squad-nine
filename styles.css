@@ -230,8 +230,25 @@ button, input, select { font-family: inherit; }
   /* 長押しでテキスト選択が始まるとiOSでドラッグできないため、行全体を選択禁止に */
   user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
 }
-.order-row.dragging { opacity: .4; }
-.order-row.drop-target td { box-shadow: inset 0 2px 0 var(--accent); }
+/* ライブ並べ替え中の見た目 */
+.order-row.drag-live {
+  position: relative; z-index: 5;
+  background: #232c37;
+  box-shadow: 0 8px 22px rgba(0,0,0,.55);
+}
+.order-row.drag-live td { border-bottom-color: transparent; }
+.order-row.drag-anim { transition: transform .15s ease; }
+body.dragging-order { user-select: none; -webkit-user-select: none; cursor: grabbing; }
+
+/* ドラッグハンドル（タッチ端末のみ表示） */
+.drag-handle {
+  display: none;
+  background: transparent; border: 1px solid var(--line); color: var(--fg-dim);
+  border-radius: 7px; cursor: grab; padding: 0;
+  font-size: 16px; line-height: 1;
+  touch-action: none;               /* スクロールに奪われず即ドラッグ開始 */
+}
+.drag-handle:active { cursor: grabbing; }
 .order-row td { padding: 9px 8px; vertical-align: middle; }
 .ord-no { font-size: 17px; font-weight: 900; color: var(--accent); text-align: center; }
 .ord-pos {
@@ -264,9 +281,11 @@ button, input, select { font-family: inherit; }
 /* 写真ボタンは駒にホバーできないタッチ端末でだけ打順表に出す */
 .ord-btns button.cam { display: none; }
 @media (hover: none) {
-  .ord-btns button.cam { display: inline-block; }
+  /* タッチ端末: ▲▼の代わりに 📷 × ≡（ドラッグハンドル）を出す */
+  .ord-btns button.cam, .ord-btns .drag-handle { display: inline-block; }
+  .ord-btns button.mv { display: none; }
   .ord-btns button { width: 36px; height: 36px; font-size: 12px; }
-  .c-act { width: 158px; }
+  .c-act { width: 126px; }
 }
 
 /* 狭い画面: グラウンドと駒を大きく、打順表をコンパクトに */
@@ -283,9 +302,9 @@ button, input, select { font-family: inherit; }
   .ord-no { font-size: 14px; }
   .c-pos { width: 42px; }
   .ord-pos { font-size: 10px; padding: 2px 4px; white-space: normal; line-height: 1.25; }
-  .c-act { width: 142px; }
+  .c-act { width: 112px; }
   .ord-btns { gap: 2px; }
-  .ord-btns button { width: 32px; height: 32px; font-size: 11px; }
+  .ord-btns button { width: 33px; height: 33px; font-size: 11px; }
   .ord-avatar { width: 40px; height: 40px; }
   .ord-name { gap: 6px; }
   .ord-pname { font-size: 13px; }

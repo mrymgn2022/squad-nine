@@ -408,7 +408,6 @@
       const player = playerAt(key);
       const tr = document.createElement('tr');
       tr.className = 'order-row';
-      tr.draggable = true;
       tr.dataset.idx = String(idx);
 
       const tdNo = document.createElement('td');
@@ -473,10 +472,10 @@
       }
 
       const up = document.createElement('button');
-      up.type = 'button'; up.textContent = '▲'; up.title = '上へ';
+      up.type = 'button'; up.className = 'mv'; up.textContent = '▲'; up.title = '上へ';
       up.addEventListener('click', () => moveOrder(idx, idx - 1));
       const dn = document.createElement('button');
-      dn.type = 'button'; dn.textContent = '▼'; dn.title = '下へ';
+      dn.type = 'button'; dn.className = 'mv'; dn.textContent = '▼'; dn.title = '下へ';
       dn.addEventListener('click', () => moveOrder(idx, idx + 1));
       btns.appendChild(up); btns.appendChild(dn);
 
@@ -487,13 +486,19 @@
         del.addEventListener('click', () => removePlayer(key));
         btns.appendChild(del);
       }
+
+      // タッチ端末用のドラッグハンドル（iOSのリスト編集と同じ作法）
+      const handle = document.createElement('button');
+      handle.type = 'button'; handle.className = 'drag-handle'; handle.textContent = '≡';
+      handle.title = 'ドラッグで打順を入れ替え';
+      btns.appendChild(handle);
+
       tdAct.appendChild(btns);
 
       tr.appendChild(tdNo); tr.appendChild(tdPos); tr.appendChild(tdName); tr.appendChild(tdAct);
       el.orderBody.appendChild(tr);
+      attachRowDrag(tr, idx);
     });
-
-    wireDragAndDrop();
   }
 
   function moveOrder(from, to) {
@@ -505,34 +510,97 @@
     renderAll();
   }
 
-  let dragFrom = null;
-  function wireDragAndDrop() {
-    const rows = el.orderBody.querySelectorAll('.order-row');
-    rows.forEach(row => {
-      row.addEventListener('dragstart', e => {
-        dragFrom = +row.dataset.idx;
-        row.classList.add('dragging');
-        try { e.dataTransfer.setData('text/plain', String(dragFrom)); } catch (err) {}
-        e.dataTransfer.effectAllowed = 'move';
-      });
-      row.addEventListener('dragend', () => {
-        row.classList.remove('dragging');
-        rows.forEach(r => r.classList.remove('drop-target'));
-      });
-      row.addEventListener('dragover', e => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        row.classList.add('drop-target');
-      });
-      row.addEventListener('dragleave', () => row.classList.remove('drop-target'));
-      row.addEventListener('drop', e => {
-        e.preventDefault();
-        row.classList.remove('drop-target');
-        const to = +row.dataset.idx;
-        if (dragFrom !== null) moveOrder(dragFrom, to);
-        dragFrom = null;
-      });
+  // ------------------------------------------------------------
+  // 打順のライブ並べ替え（iOSのリスト編集/Apple Music方式）
+  //   掴んだ行が指に追従し、他の行がリアルタイムに場所を空ける
+  //   タッチ: ≡ハンドルのみ / マウス: 行のどこでも（5px動いたらドラッグ扱い）
+  // ------------------------------------------------------------
+  function attachRowDrag(row, fromIdx) {
+    row.addEventListener('pointerdown', e => {
+      if (e.button !== undefined && e.button !== 0) return;
+      const onHandle = !!(e.target.closest && e.target.closest('.drag-handle'));
+      if (e.pointerType !== 'mouse' && !onHandle) return;          // タッチはハンドルからのみ
+      if (!onHandle && e.target.closest('button')) return;         // ▲▼×📷はそのまま
+      startRowDrag(e, row, fromIdx, onHandle);
     });
+  }
+
+  function startRowDrag(e, row, fromIdx, immediate) {
+    const rows = Array.from(el.orderBody.querySelectorAll('.order-row'));
+    // ドキュメント座標で各行の中心を控えておく（オートスクロールしてもズレない）
+    const mids = rows.map(r => {
+      const rc = r.getBoundingClientRect();
+      return rc.top + window.scrollY + rc.height / 2;
+    });
+    const h = rows[fromIdx].getBoundingClientRect().height;
+    const startDocY = e.clientY + window.scrollY;
+    const pid = e.pointerId;
+    let engaged = !!immediate;
+    let newIdx = fromIdx;
+
+    const engage = () => {
+      row.classList.add('drag-live');
+      rows.forEach(r => { if (r !== row) r.classList.add('drag-anim'); });
+      document.body.classList.add('dragging-order');
+    };
+    if (engaged) { engage(); e.preventDefault(); }
+
+    const onMove = ev => {
+      if (ev.pointerId !== pid) return;
+      const docY = ev.clientY + window.scrollY;
+      const dy = docY - startDocY;
+      if (!engaged) {
+        if (Math.abs(dy) < 5) return;
+        engaged = true;
+        engage();
+      }
+      ev.preventDefault();
+      row.style.transform = 'translateY(' + dy + 'px)';
+
+      // 掴んだ行の中心が他の行の中心を跨いだら、その行をスライドさせる
+      const centerY = mids[fromIdx] + dy;
+      let up = 0, down = 0;
+      rows.forEach((r, i) => {
+        if (i === fromIdx) return;
+        let ty = 0;
+        if (i > fromIdx && centerY > mids[i]) { ty = -h; up++; }
+        else if (i < fromIdx && centerY < mids[i]) { ty = h; down++; }
+        r.style.transform = ty ? 'translateY(' + ty + 'px)' : '';
+      });
+      newIdx = fromIdx + up - down;
+
+      // 画面端に近づいたらオートスクロール
+      const m = 70;
+      if (ev.clientY < m) window.scrollBy(0, -10);
+      else if (ev.clientY > window.innerHeight - m) window.scrollBy(0, 10);
+    };
+
+    const finish = commit => {
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      document.removeEventListener('pointercancel', onCancel);
+      document.body.classList.remove('dragging-order');
+      if (engaged && commit && newIdx !== fromIdx) {
+        // 掴んだ行を確定位置へ滑らせてから並びを確定する
+        row.style.transition = 'transform .12s ease';
+        row.style.transform = 'translateY(' + ((newIdx - fromIdx) * h) + 'px)';
+        setTimeout(() => moveOrder(fromIdx, newIdx), 120);
+      } else {
+        rows.forEach(r => { r.style.transform = ''; r.classList.remove('drag-anim', 'drag-live'); });
+      }
+      if (engaged) {
+        // ドラッグ直後に発生するゴーストクリックだけを握りつぶす（250ms窓）
+        const swallow = ev2 => { ev2.stopPropagation(); ev2.preventDefault(); };
+        document.addEventListener('click', swallow, true);
+        setTimeout(() => document.removeEventListener('click', swallow, true), 250);
+      }
+    };
+    const onUp = ev => { if (ev.pointerId === pid) finish(true); };
+    const onCancel = ev => { if (ev.pointerId === pid) finish(false); };
+
+    document.addEventListener('pointermove', onMove, { passive: false });
+    document.addEventListener('pointerup', onUp);
+    document.addEventListener('pointercancel', onCancel);
   }
 
   /** 球場イラストを描き直す（デザイン変更時のみ） */
