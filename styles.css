@@ -229,6 +229,8 @@ button, input, select { font-family: inherit; }
   cursor: grab;
   /* 長押しでテキスト選択が始まるとiOSでドラッグできないため、行全体を選択禁止に */
   user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  /* 縦スクロールだけブラウザに許可（横スワイプ等に取られない） */
+  touch-action: pan-y;
 }
 /* ライブ並べ替え中の見た目 */
 .order-row.drag-live {
