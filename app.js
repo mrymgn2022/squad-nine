@@ -368,12 +368,19 @@
       });
       avatar.appendChild(del);
 
-      const name = document.createElement('div');
-      name.className = 'chip-name';
-      name.textContent = player ? player.name.replace(/　/g, ' ') : '選手を選ぶ';
-
       chip.appendChild(avatar);
-      chip.appendChild(name);
+      if (player) {
+        const name = document.createElement('div');
+        name.className = 'chip-name';
+        name.textContent = player.name.replace(/　/g, ' ');
+        chip.appendChild(name);
+      } else {
+        // 空きポジションは ＋ マークだけ（文字は出さない）
+        const plus = document.createElement('div');
+        plus.className = 'chip-add';
+        plus.textContent = '+';
+        avatar.appendChild(plus);
+      }
       chip.addEventListener('click', () => openPicker(key));
       el.chips.appendChild(chip);
     }
@@ -432,6 +439,16 @@
       const tdAct = document.createElement('td');
       const btns = document.createElement('div');
       btns.className = 'ord-btns';
+
+      // タッチ端末用の写真ボタン（駒のホバーが使えないため）
+      if (player) {
+        const cam = document.createElement('button');
+        cam.type = 'button'; cam.className = 'cam'; cam.textContent = '📷';
+        cam.title = '写真を設定';
+        cam.addEventListener('click', () => openPhoto(player));
+        btns.appendChild(cam);
+      }
+
       const up = document.createElement('button');
       up.type = 'button'; up.textContent = '▲'; up.title = '上へ';
       up.addEventListener('click', () => moveOrder(idx, idx - 1));

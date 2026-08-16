@@ -142,15 +142,24 @@ button, input, select { font-family: inherit; }
 .chip-cam { right: -3px; }
 .chip-del { left: -3px; color: #ff8b8e; font-size: 13px; }
 .chip-del:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
-/* マウス環境では触れたときだけ出す。タッチ環境では常時表示 */
+/* マウス環境では触れたときだけ出す */
 .chip:hover .chip-cam, .chip:hover .chip-del,
 .chip:focus-within .chip-cam, .chip:focus-within .chip-del { opacity: 1; }
 .chip.empty .chip-del { display: none; }
+/* タッチ環境では駒に重ねない（誤タップ防止）。削除・写真は打順表のボタンから */
 @media (hover: none) {
-  .chip.has-player .chip-cam, .chip.has-player .chip-del { opacity: 1; }
-  .chip.empty .chip-cam { opacity: 0; }
-  .chip-cam, .chip-del { width: 26px; height: 26px; font-size: 12px; }
-  .chip-del { font-size: 15px; }
+  .chip-cam, .chip-del { display: none; }
+}
+
+/* 空きポジションの右上に出す ＋ マーク */
+.chip-add {
+  position: absolute; top: -4px; right: -4px; z-index: 2;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--accent); color: #16100b;
+  font-size: 15px; font-weight: 900; line-height: 1;
+  display: grid; place-items: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,.5);
+  pointer-events: none;
 }
 
 /* 盤面リセット */
@@ -198,7 +207,7 @@ button, input, select { font-family: inherit; }
 .ghost-btn:hover { color: var(--fg); border-color: #3b4855; }
 .ghost-btn.danger:hover { color: var(--danger); border-color: var(--danger); }
 
-.order-table { width: 100%; border-collapse: collapse; }
+.order-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .order-table th {
   font-size: 11px; color: var(--fg-dim); font-weight: 600; text-align: left;
   padding: 0 8px 8px; border-bottom: 1px solid var(--line); white-space: nowrap;
@@ -239,12 +248,33 @@ button, input, select { font-family: inherit; }
 .ord-btns button:hover { color: var(--fg); border-color: #3b4855; }
 .ord-btns button.del { color: #8a6068; font-size: 14px; }
 .ord-btns button.del:hover { color: #fff; background: var(--danger); border-color: var(--danger); }
-
-/* タッチ端末では当たり判定を広げる */
+/* 写真ボタンは駒にホバーできないタッチ端末でだけ打順表に出す */
+.ord-btns button.cam { display: none; }
 @media (hover: none) {
-  .ord-btns { gap: 6px; }
-  .ord-btns button { width: 40px; height: 40px; font-size: 13px; }
-  .c-act { width: 148px; }
+  .ord-btns button.cam { display: inline-block; }
+  .ord-btns button { width: 36px; height: 36px; font-size: 12px; }
+  .c-act { width: 158px; }
+}
+
+/* 狭い画面: グラウンドと駒を大きく、打順表をコンパクトに */
+@media (max-width: 520px) {
+  .layout { padding: 10px 6px 4px; gap: 12px; }
+  .order-pane { padding: 12px 8px; border-radius: 12px; }
+  .chip { min-width: 51px; }
+  .chip-name { font-size: 10px; padding: 1px 5px; margin-top: 4px; }
+  .c-no { width: 26px; }
+  .ord-no { font-size: 14px; }
+  .c-pos { width: 44px; }
+  .ord-pos { font-size: 10px; padding: 2px 4px; white-space: normal; line-height: 1.25; }
+  .c-act { width: 150px; }
+  .ord-btns { gap: 2px; }
+  .ord-btns button { width: 34px; height: 34px; font-size: 11px; }
+  .ord-avatar { width: 42px; height: 42px; }
+  .ord-name { gap: 7px; }
+  .ord-pname { font-size: 13px; }
+  .ord-sub { font-size: 10px; }
+  .order-row td { padding: 7px 3px; }
+  .order-table th { padding: 0 3px 6px; }
 }
 
 .hint { font-size: 11px; color: #64707d; margin: 10px 2px 0; }
