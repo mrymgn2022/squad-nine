@@ -248,6 +248,7 @@ button, input, select { font-family: inherit; }
   font-size: 11px; color: var(--fg-dim); margin-top: 2px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+.ord-sub .ord-team-s { display: none; }   /* 新聞略記は狭い画面でだけ出す */
 .ord-btns { display: flex; gap: 4px; justify-content: flex-end; }
 .ord-btns button {
   background: transparent; border: 1px solid var(--line); color: var(--fg-dim);
@@ -285,7 +286,8 @@ button, input, select { font-family: inherit; }
   .ord-name { gap: 6px; }
   .ord-pname { font-size: 13px; }
   .ord-sub { font-size: 10px; }
-  .ord-sub .ord-team { display: none; }   /* 球団名を省略して投打を最後まで出す */
+  .ord-sub .ord-team { display: none; }     /* フル球団名 → 新聞略記に切替 */
+  .ord-sub .ord-team-s { display: inline; }
   .order-row td { padding: 7px 3px; }
   .order-table th { padding: 0 3px 6px; }
 }

@@ -55,6 +55,12 @@
   const DEFAULT_ORDER_DH  = ['CF', 'SS', 'RF', '3B', '1B', 'LF', 'DH', '2B', 'C'];
   const DEFAULT_ORDER_NODH = ['CF', 'SS', 'RF', '3B', '1B', 'LF', '2B', 'C', 'P'];
 
+  // 新聞略記（狭い画面の打順表で使う）
+  const TEAM_ABBR = {
+    g: '巨', t: '神', db: 'De', c: '広', s: 'ヤ', d: '中',
+    h: 'ソ', f: '日', m: 'ロ', e: '楽', b: 'オ', l: '西'
+  };
+
   const TEAM_COLORS = {
     g: '#f97709', t: '#ffe201', db: '#0055a5', c: '#ff0000', s: '#00a0de', d: '#002569',
     h: '#fcc800', f: '#01609a', m: '#a0a4a8', e: '#85000b', b: '#b69a6a', l: '#102873'
@@ -431,12 +437,16 @@
       const sub = document.createElement('div');
       sub.className = 'ord-sub';
       if (player) {
-        // 球団名は狭い画面ではCSSで非表示にする（投打を最後まで見せる）
+        // 球団名: PCはフル表記、狭い画面では新聞略記（CSSで切替）
         sub.appendChild(document.createTextNode('#' + player.number + ' '));
         const team = document.createElement('span');
         team.className = 'ord-team';
         team.textContent = player.teamShort + ' ';
         sub.appendChild(team);
+        const abbr = document.createElement('span');
+        abbr.className = 'ord-team-s';
+        abbr.textContent = (TEAM_ABBR[player.teamId] || player.teamShort) + ' ';
+        sub.appendChild(abbr);
         sub.appendChild(document.createTextNode(player.throws + '投' + player.batsLabel + '打'));
       } else {
         sub.textContent = POS[key].full;
