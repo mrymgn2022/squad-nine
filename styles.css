@@ -225,7 +225,11 @@ button, input, select { font-family: inherit; }
 .c-pos { width: 80px; }
 .c-act { width: 88px; }
 
-.order-row { cursor: grab; }
+.order-row {
+  cursor: grab;
+  /* 長押しでテキスト選択が始まるとiOSでドラッグできないため、行全体を選択禁止に */
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
 .order-row.dragging { opacity: .4; }
 .order-row.drop-target td { box-shadow: inset 0 2px 0 var(--accent); }
 .order-row td { padding: 9px 8px; vertical-align: middle; }
