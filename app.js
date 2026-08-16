@@ -515,17 +515,22 @@
   //   掴んだ行が指に追従し、他の行がリアルタイムに場所を空ける
   //   タッチ: ≡ハンドルのみ / マウス: 行のどこでも（5px動いたらドラッグ扱い）
   // ------------------------------------------------------------
+  // ドラッグ中はページスクロールを止める（touch-actionは後から変えられないため）
+  let touchDragActive = false;
+  document.addEventListener('touchmove', e => { if (touchDragActive) e.preventDefault(); }, { passive: false });
+
   function attachRowDrag(row, fromIdx) {
     row.addEventListener('pointerdown', e => {
       if (e.button !== undefined && e.button !== 0) return;
       const onHandle = !!(e.target.closest && e.target.closest('.drag-handle'));
-      if (e.pointerType !== 'mouse' && !onHandle) return;          // タッチはハンドルからのみ
       if (!onHandle && e.target.closest('button')) return;         // ▲▼×📷はそのまま
-      startRowDrag(e, row, fromIdx, onHandle);
+      // マウス: 5px動いたらドラッグ / ハンドル: 即ドラッグ / 行の長押し(タッチ): 220msで持ち上げ
+      const mode = e.pointerType === 'mouse' ? 'threshold' : (onHandle ? 'immediate' : 'longpress');
+      startRowDrag(e, row, fromIdx, mode);
     });
   }
 
-  function startRowDrag(e, row, fromIdx, immediate) {
+  function startRowDrag(e, row, fromIdx, mode) {
     const rows = Array.from(el.orderBody.querySelectorAll('.order-row'));
     // ドキュメント座標で各行の中心を控えておく（オートスクロールしてもズレない）
     const mids = rows.map(r => {
@@ -535,24 +540,34 @@
     const h = rows[fromIdx].getBoundingClientRect().height;
     const startDocY = e.clientY + window.scrollY;
     const pid = e.pointerId;
-    let engaged = !!immediate;
+    let engaged = false;
     let newIdx = fromIdx;
+    let pressTimer = null;
 
     const engage = () => {
+      engaged = true;
+      touchDragActive = true;
       row.classList.add('drag-live');
       rows.forEach(r => { if (r !== row) r.classList.add('drag-anim'); });
       document.body.classList.add('dragging-order');
+      if (navigator.vibrate) { try { navigator.vibrate(10); } catch (err) {} }
     };
-    if (engaged) { engage(); e.preventDefault(); }
+    if (mode === 'immediate') { engage(); e.preventDefault(); }
+    else if (mode === 'longpress') pressTimer = setTimeout(engage, 220);
 
     const onMove = ev => {
       if (ev.pointerId !== pid) return;
       const docY = ev.clientY + window.scrollY;
       const dy = docY - startDocY;
       if (!engaged) {
-        if (Math.abs(dy) < 5) return;
-        engaged = true;
-        engage();
+        if (mode === 'threshold') {
+          if (Math.abs(dy) < 5) return;
+          engage();
+        } else {
+          // 長押し前に大きく動いたらスクロールと判断して中止
+          if (Math.abs(dy) > 10) finish(false);
+          return;
+        }
       }
       ev.preventDefault();
       row.style.transform = 'translateY(' + dy + 'px)';
@@ -576,6 +591,8 @@
     };
 
     const finish = commit => {
+      clearTimeout(pressTimer);
+      touchDragActive = false;
       document.removeEventListener('pointermove', onMove);
       document.removeEventListener('pointerup', onUp);
       document.removeEventListener('pointercancel', onCancel);
@@ -641,8 +658,8 @@
   function openPicker(posKey) {
     picker.target = posKey;
     picker.title.textContent = POS[posKey].full + ' を選ぶ';
-    // その守備位置の登録区分をそのまま初期値にする（DHは区分がないので全ポジション）
-    picker.group.value = POS[posKey].group || 'all';
+    // その守備位置の登録区分を初期値にする（DHは区分がないので内野手を初期表示）
+    picker.group.value = POS[posKey].group || (posKey === 'DH' ? '内野手' : 'all');
     picker.team.value = state.myTeam || 'all';
     picker.search.value = '';
     picker.modal.hidden = false;
