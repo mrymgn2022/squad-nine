@@ -62,8 +62,8 @@
   const STORE_PHOTOS = 'squadnine.photos.v1';
   const STORE_WELCOME = 'squadnine.welcomed.v1';
 
-  // 共有画像に焼き込むサイト名。公開ドメインが決まったらここを書き換える
-  const SHARE_SITE = 'squadnine.jp';
+  // 共有画像に焼き込むサイト名。独自ドメイン取得後はここを書き換える
+  const SHARE_SITE = 'mrymgn2022.github.io/squad-nine';
 
   // ロゴ（ボールに9）。viewBox 0 0 100 100 で描く中身
   const LOGO_MARK =
