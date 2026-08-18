@@ -82,20 +82,15 @@ button, input, select { font-family: inherit; }
 
 /* ---------- field ---------- */
 .field-pane { min-width: 0; }
-/* 盤面はSVGの上部の余白(120/1010)を切り落として表示する（app.jsのBOARD_CROP_*と対応） */
+/* 盤面: フェンスなしダイヤモンド（viewBox 1000x900） */
 .field-wrap {
-  position: relative; width: 100%; aspect-ratio: 1000 / 890;
+  position: relative; width: 100%; aspect-ratio: 1000 / 900;
 }
 .field-bg {
   position: absolute; inset: 0; border-radius: 16px; overflow: hidden;
   border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(0,0,0,.45);
 }
-.field-svg {
-  position: absolute; left: 0; width: 100%;
-  height: calc(100% * 1010 / 890);
-  top: calc(-100% * 120 / 890);
-  display: block;
-}
+.field-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .chips { position: absolute; inset: 0; }
 
 .chip {

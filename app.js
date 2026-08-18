@@ -12,17 +12,18 @@
   const BOARD_CROP_Y0 = 120, BOARD_CROP_H = 890;
 
   const POSITIONS = [
-    { key: 'P',  num: 1, kanji: '投', kana: 'ピッチャー',   full: '投手',   group: '投手',   x: 50,   y: 61.6 },
-    { key: 'C',  num: 2, kanji: '捕', kana: 'キャッチャー', full: '捕手',   group: '捕手',   x: 50,   y: 86.7 },
-    { key: '1B', num: 3, kanji: '一', kana: 'ファースト',   full: '一塁手', group: '内野手', x: 67.6, y: 61.4 },
-    { key: '2B', num: 4, kanji: '二', kana: 'セカンド',     full: '二塁手', group: '内野手', x: 62.0, y: 44.6 },
-    { key: '3B', num: 5, kanji: '三', kana: 'サード',       full: '三塁手', group: '内野手', x: 32.4, y: 61.4 },
-    { key: 'SS', num: 6, kanji: '遊', kana: 'ショート',     full: '遊撃手', group: '内野手', x: 38.0, y: 44.6 },
-    { key: 'LF', num: 7, kanji: '左', kana: 'レフト',       full: '左翼手', group: '外野手', x: 21.2, y: 36.8 },
-    { key: 'CF', num: 8, kanji: '中', kana: 'センター',     full: '中堅手', group: '外野手', x: 50,   y: 28.5 },
-    { key: 'RF', num: 9, kanji: '右', kana: 'ライト',       full: '右翼手', group: '外野手', x: 78.8, y: 36.8 },
-    // DHは一塁側ファウルゾーンの端（フェンス外の余白）に置く
-    { key: 'DH', num: 0, kanji: '指', kana: 'DH',           full: '指名打者', group: null,   x: 83.5, y: 72.0 }
+    // フェンスなしダイヤモンド配置（%）。球場デザイン復活時の旧座標は git 履歴参照
+    { key: 'P',  num: 1, kanji: '投', kana: 'ピッチャー',   full: '投手',   group: '投手',   x: 50, y: 54 },
+    { key: 'C',  num: 2, kanji: '捕', kana: 'キャッチャー', full: '捕手',   group: '捕手',   x: 42, y: 85 },
+    { key: '1B', num: 3, kanji: '一', kana: 'ファースト',   full: '一塁手', group: '内野手', x: 81, y: 58 },
+    { key: '2B', num: 4, kanji: '二', kana: 'セカンド',     full: '二塁手', group: '内野手', x: 67, y: 33 },
+    { key: '3B', num: 5, kanji: '三', kana: 'サード',       full: '三塁手', group: '内野手', x: 19, y: 58 },
+    { key: 'SS', num: 6, kanji: '遊', kana: 'ショート',     full: '遊撃手', group: '内野手', x: 33, y: 33 },
+    { key: 'LF', num: 7, kanji: '左', kana: 'レフト',       full: '左翼手', group: '外野手', x: 16, y: 16 },
+    { key: 'CF', num: 8, kanji: '中', kana: 'センター',     full: '中堅手', group: '外野手', x: 50, y: 9 },
+    { key: 'RF', num: 9, kanji: '右', kana: 'ライト',       full: '右翼手', group: '外野手', x: 84, y: 16 },
+    // DHは捕手の隣（DHなし時は捕手が中央に寄る）
+    { key: 'DH', num: 0, kanji: '指', kana: 'DH',           full: '指名打者', group: null,   x: 63, y: 85 }
   ];
 
   const FIELD_STYLES = (window.FIELD && window.FIELD.styles) || [{ id: 'classic', label: '標準' }];
@@ -65,6 +66,40 @@
   function displayName(player) {
     if (!player) return '';
     return DISPLAY_NAME_OVERRIDES[player.id] || player.name.replace(/　/g, ' ');
+  }
+
+  // 守備位置のラテン略号（共有画像の打順リスト用）
+  const POS_EN = { P:'P', C:'C', '1B':'1B', '2B':'2B', '3B':'3B', SS:'SS', LF:'LF', CF:'CF', RF:'RF', DH:'DH' };
+
+  /** 表示用の姓（表示名の空白より前） */
+  function surnameOf(player) {
+    return displayName(player).split(' ')[0];
+  }
+
+  // 球団別パレット（共有画像の打順バー等）: bar=帯 fg=帯上の文字 circ=番号丸 circFg=番号
+  const TEAM_PALETTES = {
+    g:  { bar: '#f97709', fg: '#ffffff', circ: '#ffffff', circFg: '#d95f00' },
+    t:  { bar: '#141414', fg: '#ffe201', circ: '#ffe201', circFg: '#141414' },
+    db: { bar: '#0055a5', fg: '#ffffff', circ: '#ffffff', circFg: '#0055a5' },
+    c:  { bar: '#cf1126', fg: '#ffffff', circ: '#ffffff', circFg: '#cf1126' },
+    s:  { bar: '#0a3260', fg: '#ffffff', circ: '#a6ce39', circFg: '#0a3260' },
+    d:  { bar: '#003595', fg: '#ffffff', circ: '#ffffff', circFg: '#003595' },
+    h:  { bar: '#f3c108', fg: '#171310', circ: '#171310', circFg: '#f3c108' },
+    f:  { bar: '#0b3e66', fg: '#ffffff', circ: '#c8a86a', circFg: '#0b3e66' },
+    m:  { bar: '#17191d', fg: '#ffffff', circ: '#c0c5cc', circFg: '#17191d' },
+    e:  { bar: '#a3121f', fg: '#ffffff', circ: '#ffffff', circFg: '#a3121f' },
+    b:  { bar: '#132238', fg: '#ffffff', circ: '#b69a6a', circFg: '#132238' },
+    l:  { bar: '#15347a', fg: '#ffffff', circ: '#ffffff', circFg: '#15347a' },
+    brand: { bar: '#ff6b2c', fg: '#16100b', circ: '#16100b', circFg: '#ff6b2c' }
+  };
+
+  /** 配置中の選手が全員同じ球団ならその球団のパレット、混成ならブランド色 */
+  function currentPalette() {
+    const ids = Object.values(state.assign).map(id => BY_ID.get(String(id))).filter(Boolean);
+    if (!ids.length) return TEAM_PALETTES.brand;
+    const teams = new Set(ids.map(p => p.teamId));
+    if (teams.size === 1) return TEAM_PALETTES[ids[0].teamId] || TEAM_PALETTES.brand;
+    return TEAM_PALETTES.brand;
   }
 
   // 新聞略記（狭い画面の打順表で使う）
@@ -342,9 +377,9 @@
 
       const chip = document.createElement('div');
       chip.className = 'chip' + (player ? ' has-player' : ' empty');
-      chip.style.left = p.x + '%';
-      // 盤面は上部をクロップして表示しているので座標を写像する
-      chip.style.top = (((p.y / 100) * FIELD_H - BOARD_CROP_Y0) / BOARD_CROP_H * 100) + '%';
+      // DHなしのときは捕手を中央に寄せる
+      chip.style.left = (key === 'C' && !state.dh ? 50 : p.x) + '%';
+      chip.style.top = p.y + '%';
       chip.style.setProperty('--team', teamColor(player));
       chip.dataset.pos = key;
       chip.title = p.full + ' を選ぶ';
@@ -395,7 +430,7 @@
       if (player) {
         const name = document.createElement('div');
         name.className = 'chip-name';
-        name.textContent = displayName(player);
+        name.textContent = player.number + ' ' + surnameOf(player);
         chip.appendChild(name);
       } else {
         // 空きポジションは ＋ マークだけ（文字は出さない）
@@ -625,12 +660,34 @@
     document.addEventListener('pointercancel', onCancel);
   }
 
-  /** 球場イラストを描き直す（デザイン変更時のみ） */
+  /** フェンスなしダイヤモンドの盤面（viewBox 1000x900）
+   *  ※球場デザイン（field.js）は凍結中。復活時はここを FIELD.build に戻す */
+  function diamondFieldSvg(prefix) {
+    const p = prefix || 'bd';
+    const top = [500, 216], right = [800, 495], bot = [500, 774], left = [200, 495];
+    const d = 'M ' + top + ' L ' + right + ' L ' + bot + ' L ' + left + ' Z';
+    const parts = [];
+    parts.push('<pattern id="' + p + 'st" width="118" height="118" patternUnits="userSpaceOnUse">' +
+      '<rect width="118" height="118" fill="#10151c"/>' +
+      '<rect width="59" height="118" fill="#ffffff" opacity="0.018"/></pattern>');
+    parts.push('<rect x="0" y="0" width="1000" height="900" fill="url(#' + p + 'st)"/>');
+    parts.push('<path d="' + d + '" fill="none" stroke="#8a5a34" stroke-width="20" stroke-linejoin="round" opacity="0.9"/>');
+    parts.push('<path d="' + d + '" fill="none" stroke="#c8925c" stroke-width="6" stroke-linejoin="round" opacity="0.9"/>');
+    [top, right, left].forEach(pt => {
+      parts.push('<rect x="' + (pt[0] - 20) + '" y="' + (pt[1] - 20) + '" width="40" height="40" transform="rotate(45 ' + pt[0] + ' ' + pt[1] + ')" fill="#e9e4d6"/>');
+    });
+    parts.push('<path d="M ' + (bot[0] - 20) + ' ' + (bot[1] - 15) + ' h40 v18 l-20 18 l-20 -18 z" fill="#e9e4d6"/>');
+    const m = [500, 495];
+    parts.push('<rect x="' + (m[0] - 30) + '" y="' + (m[1] - 30) + '" width="60" height="60" transform="rotate(45 ' + m[0] + ' ' + m[1] + ')" fill="#8a5a34"/>');
+    parts.push('<rect x="' + (m[0] - 12) + '" y="' + (m[1] - 4) + '" width="24" height="8" fill="#e9e4d6"/>');
+    return parts.join('');
+  }
+
   function renderFieldArt() {
     const svg = document.querySelector('.field-svg');
-    if (!svg || !window.FIELD) return;
-    svg.setAttribute('viewBox', window.FIELD.viewBox);
-    svg.innerHTML = window.FIELD.build(state.fieldStyle);
+    if (!svg) return;
+    svg.setAttribute('viewBox', '0 0 1000 900');
+    svg.innerHTML = diamondFieldSvg('bd');
   }
 
   function renderAll() {
@@ -1006,11 +1063,12 @@
   // ============================================================
   // 共有画像 (SVG → PNG)
   // ============================================================
+  // 主戦場はXなので16:9を先頭（デフォルト）にする
   const SHARE_PRESETS = [
+    { id: 'x',     label: 'X (Twitter)', note: '16:9',  w: 1600, h: 900 },
     { id: 'ig',    label: 'Instagram',   note: '4:5',   w: 1080, h: 1350 },
     { id: 'sq',    label: '正方形',       note: '1:1',   w: 1080, h: 1080 },
-    { id: 'story', label: 'ストーリーズ', note: '9:16',  w: 1080, h: 1920 },
-    { id: 'x',     label: 'X (Twitter)', note: '16:9',  w: 1600, h: 900 }
+    { id: 'story', label: 'ストーリーズ', note: '9:16',  w: 1080, h: 1920 }
   ];
   const FONT = "'Yu Gothic','Hiragino Kaku Gothic ProN','Noto Sans JP','Meiryo',sans-serif";
   let sharePreset = SHARE_PRESETS[0];
@@ -1036,218 +1094,127 @@
     return out.join('');
   }
 
-  /** 出力サイズからフィールドと打順リスト（常に1列×9行）の配置を決める
-   *  fieldH はクロップ後の見た目の高さ */
-  function shareLayout(W, H) {
-    const u = Math.min(W, H) / 1080;          // 文字サイズの基準
-    const pad = 28 * u;
-    const headerH = 84 * u;
-    const footerH = 48 * u;   // ロゴ入りフッターのぶん確保
-    const availH = H - headerH - footerH;
-    const ratio = SHARE_CROP_H / FIELD_W;     // フィールドの縦横比（クロップ後）
-    const vertical = H / W >= 1.2;
-
-    if (vertical) {
-      // 縦長: 上にフィールド、下に打順1列。行の高さを確保してから残りをフィールドに使う
-      const gap = 16 * u;
-      const labelH = 36 * u;
-      let rowH = 54 * u;
-      let fieldH = availH - (labelH + 9 * rowH) - gap;
-      let fieldW = fieldH / ratio;
-      const maxFW = W - pad * 2;
-      if (fieldW > maxFW) {
-        fieldW = maxFW;
-        fieldH = fieldW * ratio;
-        rowH = Math.min(84 * u, (availH - fieldH - gap - labelH - 16 * u) / 9);
-      }
-      return {
-        u: u, rowH: rowH, center: true,
-        fieldX: (W - fieldW) / 2, fieldY: headerH, fieldW: fieldW, fieldH: fieldH,
-        listX: pad, listY: headerH + fieldH + gap + 22 * u, listW: W - pad * 2
-      };
-    }
-
-    // 横長〜正方形: 左にフィールド、右に打順1列。フィールドは高さいっぱいを基本に、
-    // リストの最低幅だけ確保する
-    const gap = 30 * u;
-    const minList = W * 0.32;
-    let fieldH = availH;
-    let fieldW = fieldH / ratio;
-    const maxFW = W - pad * 2 - gap - minList;
-    if (fieldW > maxFW) { fieldW = maxFW; fieldH = fieldW * ratio; }
-    const listX = pad + fieldW + gap;
-    const listW = W - listX - pad;
-    const labelH = 36 * u;
-    const rowH = Math.min((availH - labelH) / 9.2, listW / 4.6, 96 * u);
-    const listH = labelH + 9 * rowH;
-
-    return {
-      u: u, rowH: rowH, center: false,
-      fieldX: pad,
-      fieldY: headerH + Math.max(0, (availH - fieldH) / 2),
-      fieldW: fieldW, fieldH: fieldH,
-      listX: listX,
-      listY: headerH + Math.max(0, (availH - listH) / 2) + 22 * u,
-      listW: listW
-    };
+  /** 共有画像のフィールド部分（フェンスなしダイヤモンド）を (fx,fy,fw,fh) に描く */
+  function shareFieldSvg(fx, fy, fw, fh) {
+    const k = fw / 1000;
+    const pt = f => [fx + f[0] * fw, fy + f[1] * fh];
+    const top = pt([0.5, 0.24]), right = pt([0.8, 0.55]), bot = pt([0.5, 0.86]), left = pt([0.2, 0.55]);
+    const d = 'M ' + top + ' L ' + right + ' L ' + bot + ' L ' + left + ' Z';
+    const out = [];
+    out.push('<path d="' + d + '" fill="none" stroke="#8a5a34" stroke-width="' + (20 * k) + '" stroke-linejoin="round" opacity="0.9"/>');
+    out.push('<path d="' + d + '" fill="none" stroke="#c8925c" stroke-width="' + (6 * k) + '" stroke-linejoin="round" opacity="0.9"/>');
+    [top, right, left].forEach(p => {
+      out.push('<rect x="' + (p[0] - 20 * k) + '" y="' + (p[1] - 20 * k) + '" width="' + (40 * k) + '" height="' + (40 * k) +
+        '" transform="rotate(45 ' + p[0] + ' ' + p[1] + ')" fill="#e9e4d6"/>');
+    });
+    out.push('<path d="M ' + (bot[0] - 20 * k) + ' ' + (bot[1] - 15 * k) + ' h' + (40 * k) + ' v' + (18 * k) +
+      ' l-' + (20 * k) + ' ' + (18 * k) + ' l-' + (20 * k) + ' -' + (18 * k) + ' z" fill="#e9e4d6"/>');
+    const mc = pt([0.5, 0.55]);
+    out.push('<rect x="' + (mc[0] - 30 * k) + '" y="' + (mc[1] - 30 * k) + '" width="' + (60 * k) + '" height="' + (60 * k) +
+      '" transform="rotate(45 ' + mc[0] + ' ' + mc[1] + ')" fill="#8a5a34"/>');
+    out.push('<rect x="' + (mc[0] - 12 * k) + '" y="' + (mc[1] - 4 * k) + '" width="' + (24 * k) + '" height="' + (8 * k) + '" fill="#e9e4d6"/>');
+    return out.join('');
   }
 
   function buildShareSVG(W, H) {
-    const L = shareLayout(W, H);
-    const u = L.u;
-    const title = state.title.trim() || 'MY SQUAD NINE';
-    const sub = state.dh ? 'DH あり' : 'DH なし';
+    const u = Math.min(W, H) / 1080;
+    const pal = currentPalette();
     const parts = [];
 
-    parts.push('<rect width="' + W + '" height="' + H + '" fill="#0e1116"/>');
+    // 背景（微細な縦ストライプ）
+    parts.push('<pattern id="shbg" width="' + (118 * u) + '" height="' + (118 * u) + '" patternUnits="userSpaceOnUse">' +
+      '<rect width="' + (118 * u) + '" height="' + (118 * u) + '" fill="#10151c"/>' +
+      '<rect width="' + (59 * u) + '" height="' + (118 * u) + '" fill="#ffffff" opacity="0.018"/></pattern>');
+    parts.push('<rect width="' + W + '" height="' + H + '" fill="url(#shbg)"/>');
 
-    // --- ヘッダー ---
-    parts.push('<text x="' + (W / 2) + '" y="' + (46 * u) + '" text-anchor="middle" font-family="' + FONT +
-      '" font-size="' + (40 * u) + '" font-weight="bold" fill="#ffffff">' + esc(title) + '</text>');
-    parts.push('<text x="' + (W / 2) + '" y="' + (74 * u) + '" text-anchor="middle" font-family="' + FONT +
-      '" font-size="' + (18 * u) + '" fill="#93a1b0">' + esc(sub) + '</text>');
+    // 打順リストの行データ（パはP行を追加）
+    const rows = state.order.map((k, i) => ({ num: String(i + 1), pos: POS_EN[k] || '', player: playerAt(k) }));
+    if (state.dh) rows.push({ num: 'P', pos: '', player: playerAt('P') });
 
-    // --- フィールド（画面と同じSVGを流用。上下の余白をクロップして配置する） ---
-    const fs = L.fieldW / FIELD_W;
-    const inner = document.querySelector('.field-svg').innerHTML
-      .replace(/id="([^"]+)"/g, 'id="s_$1"')
-      .replace(/url\(#([^)]+)\)/g, 'url(#s_$1)');
-    parts.push('<clipPath id="shareCrop"><rect x="' + L.fieldX + '" y="' + L.fieldY +
-      '" width="' + L.fieldW + '" height="' + (SHARE_CROP_H * fs) + '" rx="' + (14 * u) + '"/></clipPath>');
-    parts.push('<g clip-path="url(#shareCrop)"><g transform="translate(' + L.fieldX + ',' +
-      (L.fieldY - SHARE_CROP_Y0 * fs) + ') scale(' + fs + ')">' + inner + '</g></g>');
+    const side = W >= H;                 // 16:9・1:1は横並び / 4:5・9:16は縦積み
+    const m = 30 * u, footH = 52 * u;
+    let fx, fy, fw, fh, sx, sy, listW, rh;
+    if (side) {
+      listW = Math.max(300 * u, W * 0.30);
+      const availW = W - listW - m * 3;
+      fh = Math.min(H - m - footH, availW * 0.9);
+      fw = fh / 0.9;
+      fx = m + (availW - fw) / 2;
+      fy = (H - footH - fh) / 2;
+      sx = W - m - listW;
+      rh = Math.min(96 * u, (H - m * 2 - footH) / rows.length);
+      sy = (H - footH - rh * rows.length) / 2;
+    } else {
+      fw = Math.min(W - m * 2, (H * 0.44) / 0.9);
+      fh = fw * 0.9;
+      fx = (W - fw) / 2;
+      fy = m;
+      sx = m; listW = W - m * 2;
+      sy = fy + fh + 16 * u;
+      rh = Math.min(88 * u, (H - sy - footH - 10 * u) / rows.length);
+    }
 
-    // --- 選手チップ ---
-    const R = L.fieldW * 0.052;
-    const fz = R / 46;   // チップ内の文字倍率
+    // --- フィールド ---
+    parts.push(shareFieldSvg(fx, fy, fw, fh));
+
+    // --- 選手チップ（背番号＋姓の名前札つき）---
+    const R = fw * 0.052;
     const chipKeys = state.dh ? FIELD_KEYS.concat('DH') : FIELD_KEYS;
     for (const key of chipKeys) {
       const p = POS[key];
+      const px = (key === 'C' && !state.dh) ? 50 : p.x;
+      const cx = fx + px / 100 * fw;
+      const cy = fy + p.y / 100 * fh;
       const player = playerAt(key);
-      const cx = L.fieldX + (p.x / 100) * L.fieldW;
-      const cy = L.fieldY + ((p.y / 100) * FIELD_H - SHARE_CROP_Y0) * fs;
-      const col = teamColor(player);
-      const cid = 'clip_' + key;
-
-      parts.push('<clipPath id="' + cid + '"><circle cx="' + cx + '" cy="' + cy + '" r="' + R + '"/></clipPath>');
-      parts.push('<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="#10161d"/>');
-
-      parts.push(shareAvatar(cx, cy, R, player, cid));
-      parts.push('<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="none" stroke="' + col + '" stroke-width="' + (4 * fz) + '"/>');
-
-      // DHだけ役割バッジ
-      let nameTop = 8 * fz;
-      if (key === 'DH') {
-        const lbl = posLabel('DH');
-        const bh = 26 * fz;
-        const bw = Math.max(38 * fz, lbl.length * 17 * fz + 16 * fz);
-        parts.push('<rect x="' + (cx - bw / 2) + '" y="' + (cy + R - bh * 0.46) + '" width="' + bw + '" height="' + bh + '" rx="' + (8 * fz) + '" fill="' + col + '"/>');
-        parts.push('<text x="' + cx + '" y="' + (cy + R + bh * 0.24) + '" text-anchor="middle" font-family="' + FONT +
-          '" font-size="' + (16 * fz) + '" font-weight="bold" fill="#ffffff">' + esc(lbl) + '</text>');
-        nameTop = 20 * fz;
-      }
-
-      // 名前
+      parts.push(shareAvatar(cx, cy, R, player, 'shc_' + key));
+      parts.push('<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="none" stroke="' +
+        (player ? teamColor(player) : '#39434f') + '" stroke-width="' + (R * 0.11) + '"/>');
       if (player) {
-        const nm = displayName(player);
-        const nh = 30 * fz;
-        const nw = nm.length * 16 * fz + 18 * fz;
-        parts.push('<rect x="' + (cx - nw / 2) + '" y="' + (cy + R + nameTop) + '" width="' + nw + '" height="' + nh + '" rx="' + (8 * fz) + '" fill="rgba(8,12,17,0.85)"/>');
-        parts.push('<text x="' + cx + '" y="' + (cy + R + nameTop + 21 * fz) + '" text-anchor="middle" font-family="' + FONT +
-          '" font-size="' + (19 * fz) + '" font-weight="bold" fill="#ffffff">' + esc(nm) + '</text>');
+        const label = player.number + ' ' + surnameOf(player);
+        const fz = R * 0.42;
+        const w = label.length * fz * 0.92 + fz * 1.2;
+        const hh = fz * 1.75;
+        parts.push('<rect x="' + (cx - w / 2) + '" y="' + (cy + R + R * 0.14) + '" width="' + w + '" height="' + hh +
+          '" rx="' + (hh * 0.28) + '" fill="rgba(8,12,17,0.92)" stroke="rgba(255,255,255,0.14)"/>');
+        parts.push('<text x="' + cx + '" y="' + (cy + R + R * 0.14 + hh * 0.72) + '" text-anchor="middle" font-family="' + FONT +
+          '" font-size="' + fz + '" font-weight="bold" fill="#ffffff">' + esc(label) + '</text>');
       }
     }
 
-    // --- 打順リスト（設定画面の表と同じ構成: 番号 / 守備バッジ / 写真 / 名前＋詳細） ---
-    const rowH = L.rowH;
-    const rowsData = state.order.map(key => {
-      const player = playerAt(key);
-      return {
-        key: key,
-        player: player,
-        pos: posLabel(key),
-        name: player ? displayName(player) : '（未設定）',
-        sub: player
-          ? '#' + player.number + '  ' + player.teamShort + '  ' + player.throws + '投' + player.batsLabel + '打'
-          : POS[key].full,
-        color: teamColor(player),
-        textColor: teamTextColor(player)
-      };
-    });
-    const maxPosLen  = Math.max.apply(null, rowsData.map(r => r.pos.length));
-    const maxNameLen = Math.max.apply(null, rowsData.map(r => r.name.length));
-    const maxSubLen  = Math.max.apply(null, rowsData.map(r => r.sub.length));
-
-    // 行の高さから各パーツの寸法を決め、リスト幅に収まらなければ一括縮小
-    let numFz = rowH * 0.34, posFz = rowH * 0.26, nameFz = rowH * 0.30, subFz = rowH * 0.20;
-    let avR = rowH * 0.40;
-    let numW = numFz * 1.5, gapA = rowH * 0.18, gapB = rowH * 0.22, gapC = rowH * 0.20;
-    let badgeW = maxPosLen * posFz + posFz * 1.4, badgeH = posFz * 1.9;
-    let textW = Math.max(maxNameLen * nameFz, maxSubLen * subFz * 0.75);
-    let contentW = numW + gapA + badgeW + gapB + avR * 2 + gapC + textW;
-    const f = Math.min(1, L.listW / contentW);
-    if (f < 1) {
-      numFz *= f; posFz *= f; nameFz *= f; subFz *= f; avR *= f;
-      numW *= f; gapA *= f; gapB *= f; gapC *= f;
-      badgeW *= f; badgeH *= f; textW *= f;
-      contentW = L.listW;
-    }
-    const listX = L.center ? Math.max(L.listX, (W - contentW) / 2) : L.listX;
-
-    parts.push('<text x="' + listX + '" y="' + L.listY + '" font-family="' + FONT +
-      '" font-size="' + (20 * u) + '" font-weight="bold" fill="#93a1b0">打順</text>');
-
-    rowsData.forEach((r, i) => {
-      const top = L.listY + 16 * u + i * rowH;
-      const cy = top + rowH / 2;
-      let x = listX;
-
-      // 打順番号
-      parts.push('<text x="' + (x + numW / 2) + '" y="' + (cy + numFz * 0.35) + '" text-anchor="middle" font-family="' + FONT +
-        '" font-size="' + numFz + '" font-weight="bold" fill="#ff6b2c">' + (i + 1) + '</text>');
-      x += numW + gapA;
-
-      // 守備バッジ
-      parts.push('<rect x="' + x + '" y="' + (cy - badgeH / 2) + '" width="' + badgeW + '" height="' + badgeH +
-        '" rx="' + (badgeH * 0.28) + '" fill="#1f262f" stroke="#2c3540" stroke-width="1.5"/>');
-      parts.push('<text x="' + (x + badgeW / 2) + '" y="' + (cy + posFz * 0.35) + '" text-anchor="middle" font-family="' + FONT +
-        '" font-size="' + posFz + '" font-weight="bold" fill="' + r.textColor + '">' + esc(r.pos) + '</text>');
-      x += badgeW + gapB;
-
-      // 写真
-      const acx = x + avR;
-      const cid = 'ordclip_' + i;
-      parts.push(shareAvatar(acx, cy, avR, r.player, cid));
-      parts.push('<circle cx="' + acx + '" cy="' + cy + '" r="' + avR + '" fill="none" stroke="' +
-        (r.player ? r.color : '#39434f') + '" stroke-width="' + (2.6 * (f < 1 ? f : 1)) + '"/>');
-      x = acx + avR + gapC;
-
-      // 名前と詳細
-      parts.push('<text x="' + x + '" y="' + (cy - rowH * 0.04) + '" font-family="' + FONT +
-        '" font-size="' + nameFz + '"' + (r.player ? ' font-weight="bold" fill="#e8edf3"' : ' fill="#5d6a77"') + '>' +
-        esc(r.name) + '</text>');
-      parts.push('<text x="' + x + '" y="' + (cy + rowH * 0.30) + '" font-family="' + FONT +
-        '" font-size="' + subFz + '" fill="#93a1b0">' + esc(r.sub) + '</text>');
-
-      // 区切り線
-      if (i < rowsData.length - 1) {
-        parts.push('<line x1="' + listX + '" y1="' + (top + rowH) + '" x2="' + (listX + contentW) + '" y2="' + (top + rowH) +
-          '" stroke="#232b34" stroke-width="1.5"/>');
+    // --- 打順リスト（球団カラーの帯・番号丸・守備略号・フル名）---
+    const names = rows.map(r => r.player ? displayName(r.player) : '未設定');
+    const maxLen = Math.max.apply(null, names.map(s => s.length));
+    const nameFz = Math.min(rh * 0.42, (listW - rh * 1.55) / maxLen);
+    rows.forEach((r, i) => {
+      const y = sy + i * rh;
+      const bh = rh - 8 * u;
+      const cyy = y + bh / 2;
+      parts.push('<rect x="' + sx + '" y="' + y + '" width="' + listW + '" height="' + bh +
+        '" rx="' + (10 * u) + '" fill="' + pal.bar + '" stroke="rgba(255,255,255,0.13)" stroke-width="' + (1.5 * u) + '"/>');
+      parts.push('<circle cx="' + (sx + rh * 0.42) + '" cy="' + cyy + '" r="' + (rh * 0.27) + '" fill="' + pal.circ + '"/>');
+      parts.push('<text x="' + (sx + rh * 0.42) + '" y="' + (cyy + rh * 0.1) + '" text-anchor="middle" font-family="' + FONT +
+        '" font-size="' + (rh * 0.3) + '" font-weight="900" fill="' + pal.circFg + '">' + r.num + '</text>');
+      let nx = sx + rh * 0.78;
+      if (r.pos) {
+        parts.push('<rect x="' + nx + '" y="' + (cyy - rh * 0.16) + '" width="' + (rh * 0.44) + '" height="' + (rh * 0.32) +
+          '" rx="' + (4 * u) + '" fill="rgba(0,0,0,0.35)"/>');
+        parts.push('<text x="' + (nx + rh * 0.22) + '" y="' + (cyy + rh * 0.095) + '" text-anchor="middle" font-family="' + FONT +
+          '" font-size="' + (rh * 0.185) + '" font-weight="bold" fill="#ffffff">' + r.pos + '</text>');
       }
+      nx += rh * 0.56;
+      parts.push('<text x="' + nx + '" y="' + (cyy + nameFz * 0.36) + '" font-family="' + FONT +
+        '" font-size="' + nameFz + '" font-weight="900" fill="' + pal.fg + '"' +
+        (r.player ? '' : ' opacity="0.55"') + '>' + esc(names[i]) + '</text>');
     });
 
-    // フッター: ロゴ＋SQUAD NINE を中央に、ドメインを右に
-    const fFz = 21 * u;                               // 文字サイズ
-    const fSize = 38 * u;                             // ロゴの大きさ
-    const fGap = 11 * u;                              // ロゴと文字の間隔
-    const fBase = H - 16 * u;                         // 文字のベースライン
-    const fTextW = 10 * fFz * 0.62 + 9 * 3.5 * u;     // "SQUAD NINE" の概算幅
-    const fLeft = W / 2 - (fSize + fGap + fTextW) / 2;
-    parts.push(logoSvg(fLeft, fBase - fSize * 0.82, fSize));
-    parts.push('<text x="' + (fLeft + fSize + fGap) + '" y="' + fBase + '" font-family="' + FONT +
-      '" font-size="' + fFz + '" font-weight="bold" letter-spacing="' + (3.5 * u) + '" fill="#aab6c2">SQUAD NINE</text>');
+    // --- フッター: ロゴ＋SQUAD NINE（左）、ドメイン（右）---
+    const fBase = H - 16 * u;
+    const fSize = 34 * u;
+    parts.push(logoSvg(m, fBase - fSize * 0.82, fSize));
+    parts.push('<text x="' + (m + fSize + 10 * u) + '" y="' + fBase + '" font-family="' + FONT +
+      '" font-size="' + (19 * u) + '" font-weight="bold" letter-spacing="' + (3 * u) + '" fill="#8b98a5">SQUAD NINE</text>');
     if (SHARE_SITE) {
-      parts.push('<text x="' + (W - 20 * u) + '" y="' + fBase + '" text-anchor="end" font-family="' + FONT +
+      parts.push('<text x="' + (W - m) + '" y="' + fBase + '" text-anchor="end" font-family="' + FONT +
         '" font-size="' + (15 * u) + '" font-weight="bold" fill="#ff6b2c">' + esc(SHARE_SITE) + '</text>');
     }
 
