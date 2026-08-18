@@ -19,9 +19,9 @@
     { key: '2B', num: 4, kanji: '二', kana: 'セカンド',     full: '二塁手', group: '内野手', x: 69, y: 35 },
     { key: '3B', num: 5, kanji: '三', kana: 'サード',       full: '三塁手', group: '内野手', x: 19, y: 58 },
     { key: 'SS', num: 6, kanji: '遊', kana: 'ショート',     full: '遊撃手', group: '内野手', x: 31, y: 35 },
-    { key: 'LF', num: 7, kanji: '左', kana: 'レフト',       full: '左翼手', group: '外野手', x: 12, y: 12 },
+    { key: 'LF', num: 7, kanji: '左', kana: 'レフト',       full: '左翼手', group: '外野手', x: 13, y: 21 },
     { key: 'CF', num: 8, kanji: '中', kana: 'センター',     full: '中堅手', group: '外野手', x: 50, y: 11.5 },
-    { key: 'RF', num: 9, kanji: '右', kana: 'ライト',       full: '右翼手', group: '外野手', x: 88, y: 12 },
+    { key: 'RF', num: 9, kanji: '右', kana: 'ライト',       full: '右翼手', group: '外野手', x: 87, y: 21 },
     // DHは捕手の隣（DHなし時は捕手が中央に寄る）
     { key: 'DH', num: 0, kanji: '指', kana: 'DH',           full: '指名打者', group: null,   x: 72, y: 85 }
   ];
