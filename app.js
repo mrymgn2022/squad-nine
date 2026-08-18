@@ -1131,34 +1131,38 @@
     const rows = state.order.map((k, i) => ({ num: String(i + 1), pos: POS_EN[k] || '', player: playerAt(k) }));
     if (state.dh) rows.push({ num: 'P', pos: '', player: playerAt('P') });
 
+    // 枠いっぱいに使う。ダイヤモンドは枠の形に合わせて伸縮する（楽天公式も横広の菱形）
     const side = W >= H;                 // 16:9・1:1は横並び / 4:5・9:16は縦積み
-    const m = 30 * u, footH = 52 * u;
+    const m = 24 * u, footH = 46 * u, gap = 14 * u;
     let fx, fy, fw, fh, sx, sy, listW, rh;
     if (side) {
       listW = Math.max(300 * u, W * 0.30);
-      const availW = W - listW - m * 3;
-      fh = Math.min(H - m - footH, availW * 0.9);
-      fw = fh / 0.9;
-      fx = m + (availW - fw) / 2;
+      fw = W - listW - m * 3;
+      fh = Math.min(H - footH - m * 2, fw * 0.92);
+      fx = m;
       fy = (H - footH - fh) / 2;
       sx = W - m - listW;
       rh = Math.min(96 * u, (H - m * 2 - footH) / rows.length);
       sy = (H - footH - rh * rows.length) / 2;
     } else {
-      fw = Math.min(W - m * 2, (H * 0.44) / 0.9);
-      fh = fw * 0.9;
-      fx = (W - fw) / 2;
-      fy = m;
-      sx = m; listW = W - m * 2;
-      sy = fy + fh + 16 * u;
-      rh = Math.min(88 * u, (H - sy - footH - 10 * u) / rows.length);
+      fw = W - m * 2;
+      const availH = H - m - footH;
+      fh = Math.min(fw * 0.62, availH * 0.52);
+      rh = Math.min(96 * u, (availH - fh - gap) / rows.length);
+      let slack = availH - fh - gap - rh * rows.length;
+      const grow = Math.min(Math.max(0, slack), fw * 0.75 - fh);
+      fh += grow; slack -= grow;
+      fx = m;
+      fy = m + Math.max(0, slack) / 2;
+      sx = m; listW = fw;
+      sy = fy + fh + gap;
     }
 
     // --- フィールド ---
     parts.push(shareFieldSvg(fx, fy, fw, fh));
 
     // --- 選手チップ（背番号＋姓の名前札つき）---
-    const R = fw * 0.052;
+    const R = Math.min(fw * 0.052, fh * 0.07);
     const chipKeys = state.dh ? FIELD_KEYS.concat('DH') : FIELD_KEYS;
     for (const key of chipKeys) {
       const p = POS[key];
