@@ -16,12 +16,12 @@
     { key: 'P',  num: 1, kanji: '投', kana: 'ピッチャー',   full: '投手',   group: '投手',   x: 50, y: 54 },
     { key: 'C',  num: 2, kanji: '捕', kana: 'キャッチャー', full: '捕手',   group: '捕手',   x: 42, y: 85 },
     { key: '1B', num: 3, kanji: '一', kana: 'ファースト',   full: '一塁手', group: '内野手', x: 81, y: 58 },
-    { key: '2B', num: 4, kanji: '二', kana: 'セカンド',     full: '二塁手', group: '内野手', x: 67, y: 33 },
+    { key: '2B', num: 4, kanji: '二', kana: 'セカンド',     full: '二塁手', group: '内野手', x: 69, y: 35 },
     { key: '3B', num: 5, kanji: '三', kana: 'サード',       full: '三塁手', group: '内野手', x: 19, y: 58 },
-    { key: 'SS', num: 6, kanji: '遊', kana: 'ショート',     full: '遊撃手', group: '内野手', x: 33, y: 33 },
-    { key: 'LF', num: 7, kanji: '左', kana: 'レフト',       full: '左翼手', group: '外野手', x: 16, y: 16 },
+    { key: 'SS', num: 6, kanji: '遊', kana: 'ショート',     full: '遊撃手', group: '内野手', x: 31, y: 35 },
+    { key: 'LF', num: 7, kanji: '左', kana: 'レフト',       full: '左翼手', group: '外野手', x: 12, y: 12 },
     { key: 'CF', num: 8, kanji: '中', kana: 'センター',     full: '中堅手', group: '外野手', x: 50, y: 9 },
-    { key: 'RF', num: 9, kanji: '右', kana: 'ライト',       full: '右翼手', group: '外野手', x: 84, y: 16 },
+    { key: 'RF', num: 9, kanji: '右', kana: 'ライト',       full: '右翼手', group: '外野手', x: 88, y: 12 },
     // DHは捕手の隣（DHなし時は捕手が中央に寄る）
     { key: 'DH', num: 0, kanji: '指', kana: 'DH',           full: '指名打者', group: null,   x: 63, y: 85 }
   ];
@@ -1162,7 +1162,7 @@
     parts.push(shareFieldSvg(fx, fy, fw, fh));
 
     // --- 選手チップ（背番号＋姓の名前札つき）---
-    const R = Math.min(fw * 0.052, fh * 0.07);
+    const R = Math.min(fw * 0.063, fh * 0.082);
     const chipKeys = state.dh ? FIELD_KEYS.concat('DH') : FIELD_KEYS;
     for (const key of chipKeys) {
       const p = POS[key];
@@ -1186,15 +1186,30 @@
     }
 
     // --- 打順リスト（球団カラーの帯・番号丸・守備略号・フル名）---
+    // LIST_PANEL=true なら右側全体を球団カラーの1枚パネルにする（バー個別ではなく）
+    const LIST_PANEL = !!window.__SHARE_LIST_PANEL;
     const names = rows.map(r => r.player ? displayName(r.player) : '未設定');
     const maxLen = Math.max.apply(null, names.map(s => s.length));
     const nameFz = Math.min(rh * 0.42, (listW - rh * 1.55) / maxLen);
+    if (LIST_PANEL) {
+      const panelY = side ? 0 : sy - 6 * u;
+      const panelH = side ? H : rh * rows.length + 12 * u;
+      const panelX = side ? sx - 12 * u : sx - 6 * u;
+      const panelW = side ? W - panelX : listW + 12 * u;
+      parts.push('<rect x="' + panelX + '" y="' + panelY + '" width="' + panelW + '" height="' + panelH +
+        '" fill="' + pal.bar + '"/>');
+    }
     rows.forEach((r, i) => {
       const y = sy + i * rh;
       const bh = rh - 8 * u;
       const cyy = y + bh / 2;
-      parts.push('<rect x="' + sx + '" y="' + y + '" width="' + listW + '" height="' + bh +
-        '" rx="' + (10 * u) + '" fill="' + pal.bar + '" stroke="rgba(255,255,255,0.13)" stroke-width="' + (1.5 * u) + '"/>');
+      if (LIST_PANEL) {
+        if (i > 0) parts.push('<line x1="' + (sx + 4 * u) + '" y1="' + (y - 4 * u) + '" x2="' + (sx + listW - 4 * u) +
+          '" y2="' + (y - 4 * u) + '" stroke="rgba(255,255,255,0.22)" stroke-width="' + (1.5 * u) + '"/>');
+      } else {
+        parts.push('<rect x="' + sx + '" y="' + y + '" width="' + listW + '" height="' + bh +
+          '" rx="' + (10 * u) + '" fill="' + pal.bar + '" stroke="rgba(255,255,255,0.13)" stroke-width="' + (1.5 * u) + '"/>');
+      }
       parts.push('<circle cx="' + (sx + rh * 0.42) + '" cy="' + cyy + '" r="' + (rh * 0.27) + '" fill="' + pal.circ + '"/>');
       parts.push('<text x="' + (sx + rh * 0.42) + '" y="' + (cyy + rh * 0.1) + '" text-anchor="middle" font-family="' + FONT +
         '" font-size="' + (rh * 0.3) + '" font-weight="900" fill="' + pal.circFg + '">' + r.num + '</text>');
