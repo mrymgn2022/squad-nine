@@ -922,8 +922,11 @@
     photo.img = null;
   }
 
-  function loadImageIntoCrop(src) {
+  function loadImageIntoCrop(src, noCors) {
     const im = new Image();
+    const isHttp = /^https?:\/\//.test(src);
+    // まずCORS付きで試す（成功すれば保存時にcanvasが汚染されない）
+    if (isHttp && !noCors) im.crossOrigin = 'anonymous';
     im.onload = () => {
       photo.img = im;
       // cover になる最小倍率を1.0とする
@@ -935,8 +938,26 @@
       photo.zoomRow.hidden = false;
       drawCrop();
     };
-    im.onerror = () => toast('画像を読み込めませんでした');
+    im.onerror = () => {
+      if (isHttp && !noCors) { loadImageIntoCrop(src, true); return; }   // CORS不可のホストは表示のみで再試行
+      toast('画像を読み込めませんでした');
+    };
     im.src = src;
+  }
+
+  /** URLから画像を取り込む。fetchできれば File 化（保存時の汚染なし）、だめなら直接読み込み */
+  async function loadImageUrl(url) {
+    try {
+      const res = await fetch(url, { mode: 'cors' });
+      if (res.ok) {
+        const blob = await res.blob();
+        if (blob.type && blob.type.indexOf('image') === 0) {
+          readFile(new File([blob], 'paste', { type: blob.type }));
+          return;
+        }
+      }
+    } catch (err) { /* CORS等で失敗したら下へ */ }
+    loadImageIntoCrop(url);
   }
 
   function clampOffsets() {
@@ -1007,7 +1028,7 @@
     const dt = e.dataTransfer;
     if (dt.files && dt.files[0]) { readFile(dt.files[0]); return; }
     const url = dt.getData('text/uri-list') || dt.getData('text/plain');
-    if (url) loadImageIntoCrop(url);
+    if (url && /^https?:\/\//.test(url.trim())) loadImageUrl(url.trim());
   });
 
   function handlePaste(e) {
@@ -1022,7 +1043,7 @@
     }
     const text = e.clipboardData && e.clipboardData.getData('text');
     if (text && /^https?:\/\//.test(text.trim())) {
-      loadImageIntoCrop(text.trim());
+      loadImageUrl(text.trim());
       e.preventDefault();
     }
   }
@@ -1055,7 +1076,20 @@
           return;
         }
       }
-      toast('クリップボードに画像がありません');
+      // 画像がない場合、テキストとして画像URLが入っていることがある
+      // （スマホで画像を「コピー」するとURLだけ入るブラウザがある）
+      let text = '';
+      try { text = ((await navigator.clipboard.readText()) || '').trim(); } catch (err2) { /* 読めなければ空のまま */ }
+      if (/^https?:\/\//.test(text)) { loadImageUrl(text); return; }
+      // HTMLとしてコピーされている場合は <img src> を探す
+      for (const it of items) {
+        if (it.types.indexOf('text/html') >= 0) {
+          const html = await (await it.getType('text/html')).text();
+          const mt = html.match(/<img[^>]+src\s*=\s*["']([^"']+)["']/i);
+          if (mt && /^https?:\/\//.test(mt[1])) { loadImageUrl(mt[1]); return; }
+        }
+      }
+      toast('画像が見つかりません。画像を長押し→「コピー」でコピーするか、「写真に保存」して「写真を選ぶ / 撮る」を使ってください');
     } catch (err) {
       fallback();
     }
