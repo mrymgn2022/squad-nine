@@ -233,6 +233,9 @@ button, input, select { font-family: inherit; }
 }
 .order-row.drag-live td { border-bottom-color: transparent; }
 .order-row.drag-anim { transition: transform .15s ease; }
+/* DHあり時の投手行: 打順の下に区切り線つきで表示、並べ替え対象外 */
+.order-row.pitcher-row { cursor: default; }
+.order-row.pitcher-row td { border-top: 2px solid #2c3742; }
 body.dragging-order { user-select: none; -webkit-user-select: none; cursor: grabbing; }
 
 /* カナ表記のとき守備バッジ列を広げて1行で収める（bodyにnota-kanaが付く） */
@@ -414,6 +417,13 @@ body.nota-kana .c-pos { width: 104px; }
 .paste-zone:empty::before { content: attr(data-ph); color: #64707d; }
 .paste-zone:focus { outline: none; border-color: var(--accent); }
 @media (hover: none) { .paste-zone { display: block; } }
+
+/* 端末別の説明文（PC向け/タッチ向けを出し分ける） */
+.touch-only { display: none; }
+@media (hover: none) {
+  .pc-only { display: none; }
+  .touch-only { display: inline; }
+}
 .photo-actions .pbtn { flex: 0 1 auto; }
 label.pbtn { display: inline-block; }
 

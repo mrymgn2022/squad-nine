@@ -18,7 +18,7 @@
 <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="icons/icon-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="stylesheet" href="styles.css?v=29">
+<link rel="stylesheet" href="styles.css?v=30">
 </head>
 <body>
 
@@ -92,7 +92,7 @@
       <button class="modal-close" data-close>×</button>
     </div>
     <div class="picker-filters">
-      <input id="pickerSearch" class="search" type="search" placeholder="選手名で検索（例: 村上／おかもと は不可・漢字で）" autocomplete="off">
+      <input id="pickerSearch" class="search" type="search" placeholder="選手名・背番号で検索（ひらがなでもOK）" autocomplete="off">
       <div class="filter-row">
         <select id="pickerTeam" class="mini-select"></select>
         <select id="pickerGroup" class="mini-select">
@@ -122,7 +122,8 @@
 
       <div class="crop-area" id="cropArea">
         <div class="crop-empty" id="cropEmpty">
-          ここに画像を<br>ドラッグ＆ドロップ<br>または <b>Ctrl+V</b> で貼り付け
+          <span class="pc-only">ここに画像を<br>ドラッグ＆ドロップ<br>または <b>Ctrl+V</b> で貼り付け</span>
+          <span class="touch-only">下のボタンから写真を選ぶか<br>コピーした画像を「貼り付け」</span>
         </div>
         <canvas id="cropCanvas" width="360" height="360"></canvas>
       </div>
@@ -142,7 +143,7 @@
         <button class="pbtn danger" id="btnPhotoRemove">削除</button>
       </div>
       <div id="pasteZone" class="paste-zone" contenteditable="true" data-ph="コピーした画像を、ここを長押し →「ペースト」で貼り付け"></div>
-      <p class="hint small">検索した画像を「画像をコピー」してから貼り付けてください（PCはCtrl+V）。写真はこの端末内にのみ保存されます。</p>
+      <p class="hint small">検索した画像を長押し（PCは右クリック）→「画像をコピー」→「貼り付け」ボタンで取り込めます。写真はこの端末内にのみ保存されます。</p>
     </div>
     <div class="modal-foot">
       <button class="pbtn" data-close>キャンセル</button>
@@ -219,9 +220,9 @@
 
 <div class="toast" id="toast" hidden></div>
 
-<script src="data/npb-players.js?v=29"></script>
-<script src="data/presets.js?v=29"></script>
-<script src="field.js?v=29"></script>
-<script src="app.js?v=29"></script>
+<script src="data/npb-players.js?v=30"></script>
+<script src="data/presets.js?v=30"></script>
+<script src="field.js?v=30"></script>
+<script src="app.js?v=30"></script>
 </body>
 </html>

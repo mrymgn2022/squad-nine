@@ -449,16 +449,24 @@
   // ============================================================
   function renderOrder() {
     el.orderBody.innerHTML = '';
-
     state.order.forEach((key, idx) => {
-      const player = playerAt(key);
-      const tr = document.createElement('tr');
-      tr.className = 'order-row';
-      tr.dataset.idx = String(idx);
+      el.orderBody.appendChild(makeOrderRow(key, String(idx + 1), idx));
+    });
+    // DHありの時は打順の下に投手行を出す（打順には入らないので並べ替え不可）
+    if (state.dh) el.orderBody.appendChild(makeOrderRow('P', 'P', -1));
+  }
+
+  /** 打順テーブルの1行を作る。idx<0 は打順外の行（投手行）で、▲▼とドラッグなし */
+  function makeOrderRow(key, noLabel, idx) {
+    const movable = idx >= 0;
+    const player = playerAt(key);
+    const tr = document.createElement('tr');
+    tr.className = 'order-row' + (movable ? '' : ' pitcher-row');
+    if (movable) tr.dataset.idx = String(idx);
 
       const tdNo = document.createElement('td');
       tdNo.className = 'ord-no';
-      tdNo.textContent = idx + 1;
+      tdNo.textContent = noLabel;
 
       const tdPos = document.createElement('td');
       const posSpan = document.createElement('span');
@@ -517,13 +525,15 @@
         btns.appendChild(cam);
       }
 
-      const up = document.createElement('button');
-      up.type = 'button'; up.className = 'mv'; up.textContent = '▲'; up.title = '上へ';
-      up.addEventListener('click', () => moveOrder(idx, idx - 1));
-      const dn = document.createElement('button');
-      dn.type = 'button'; dn.className = 'mv'; dn.textContent = '▼'; dn.title = '下へ';
-      dn.addEventListener('click', () => moveOrder(idx, idx + 1));
-      btns.appendChild(up); btns.appendChild(dn);
+      if (movable) {
+        const up = document.createElement('button');
+        up.type = 'button'; up.className = 'mv'; up.textContent = '▲'; up.title = '上へ';
+        up.addEventListener('click', () => moveOrder(idx, idx - 1));
+        const dn = document.createElement('button');
+        dn.type = 'button'; dn.className = 'mv'; dn.textContent = '▼'; dn.title = '下へ';
+        dn.addEventListener('click', () => moveOrder(idx, idx + 1));
+        btns.appendChild(up); btns.appendChild(dn);
+      }
 
       if (player) {
         const del = document.createElement('button');
@@ -536,9 +546,8 @@
       tdAct.appendChild(btns);
 
       tr.appendChild(tdNo); tr.appendChild(tdPos); tr.appendChild(tdName); tr.appendChild(tdAct);
-      el.orderBody.appendChild(tr);
-      attachRowDrag(tr, idx);
-    });
+    if (movable) attachRowDrag(tr, idx);
+    return tr;
   }
 
   function moveOrder(from, to) {
@@ -570,7 +579,7 @@
   }
 
   function startRowDrag(e, row, fromIdx, mode) {
-    const rows = Array.from(el.orderBody.querySelectorAll('.order-row'));
+    const rows = Array.from(el.orderBody.querySelectorAll('.order-row:not(.pitcher-row)'));
     // ドキュメント座標で各行の中心を控えておく（オートスクロールしてもズレない）
     const mids = rows.map(r => {
       const rc = r.getBoundingClientRect();
@@ -1144,7 +1153,7 @@
     ctx.drawImage(photo.canvas, 0, 0, CROP_SIZE, CROP_SIZE, 0, 0, OUT_SIZE, OUT_SIZE);
     let data;
     try { data = out.toDataURL('image/jpeg', 0.86); }
-    catch (err) { toast('この画像は保存できません（外部サイトの画像は一度ダウンロードしてください）'); return; }
+    catch (err) { toast('この画像は保存できません。画像を端末に保存してから「写真を選ぶ / 撮る」で読み込んでください'); return; }
     photos[photo.player.id] = data;
     if (savePhotos()) toast('写真を保存しました');
     closePhoto();
