@@ -319,7 +319,10 @@ body.nota-kana .c-pos { width: 104px; }
   .ord-sub { font-size: 10px; }
   .order-row td { padding: 7px 3px; }
   .order-table th { padding: 0 3px 6px; }
-  /* カナ表記は守備列が広がり「ソフトバンク」が入りきらないため新聞略記 */
+}
+
+/* カナ表記は守備列が広がる分、フル球団名が入る下限が上がる（390px〜） */
+@media (max-width: 389px) {
   body.nota-kana .ord-sub .ord-team { display: none; }
   body.nota-kana .ord-sub .ord-team-s { display: inline; }
 }
