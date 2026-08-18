@@ -14,14 +14,14 @@
   const POSITIONS = [
     // フェンスなしダイヤモンド配置（%）。球場デザイン復活時の旧座標は git 履歴参照
     { key: 'P',  num: 1, kanji: '投', kana: 'ピッチャー',   full: '投手',   group: '投手',   x: 50, y: 54 },
-    { key: 'C',  num: 2, kanji: '捕', kana: 'キャッチャー', full: '捕手',   group: '捕手',   x: 42, y: 85 },
+    { key: 'C',  num: 2, kanji: '捕', kana: 'キャッチャー', full: '捕手',   group: '捕手',   x: 50, y: 85 },
     { key: '1B', num: 3, kanji: '一', kana: 'ファースト',   full: '一塁手', group: '内野手', x: 81, y: 58 },
-    { key: '2B', num: 4, kanji: '二', kana: 'セカンド',     full: '二塁手', group: '内野手', x: 69, y: 35 },
+    { key: '2B', num: 4, kanji: '二', kana: 'セカンド',     full: '二塁手', group: '内野手', x: 67, y: 35 },
     { key: '3B', num: 5, kanji: '三', kana: 'サード',       full: '三塁手', group: '内野手', x: 19, y: 58 },
-    { key: 'SS', num: 6, kanji: '遊', kana: 'ショート',     full: '遊撃手', group: '内野手', x: 31, y: 35 },
-    { key: 'LF', num: 7, kanji: '左', kana: 'レフト',       full: '左翼手', group: '外野手', x: 13, y: 21 },
+    { key: 'SS', num: 6, kanji: '遊', kana: 'ショート',     full: '遊撃手', group: '内野手', x: 33, y: 35 },
+    { key: 'LF', num: 7, kanji: '左', kana: 'レフト',       full: '左翼手', group: '外野手', x: 12, y: 21 },
     { key: 'CF', num: 8, kanji: '中', kana: 'センター',     full: '中堅手', group: '外野手', x: 50, y: 11.5 },
-    { key: 'RF', num: 9, kanji: '右', kana: 'ライト',       full: '右翼手', group: '外野手', x: 87, y: 21 },
+    { key: 'RF', num: 9, kanji: '右', kana: 'ライト',       full: '右翼手', group: '外野手', x: 88, y: 21 },
     // DHは捕手の隣（DHなし時は捕手が中央に寄る）
     { key: 'DH', num: 0, kanji: '指', kana: 'DH',           full: '指名打者', group: null,   x: 72, y: 85 }
   ];
@@ -377,8 +377,7 @@
 
       const chip = document.createElement('div');
       chip.className = 'chip' + (player ? ' has-player' : ' empty');
-      // DHなしのときは捕手を中央に寄せる
-      chip.style.left = (key === 'C' && !state.dh ? 50 : p.x) + '%';
+      chip.style.left = p.x + '%';
       chip.style.top = p.y + '%';
       chip.style.setProperty('--team', teamColor(player));
       chip.dataset.pos = key;
@@ -1184,8 +1183,7 @@
     const chipKeys = state.dh ? FIELD_KEYS.concat('DH') : FIELD_KEYS;
     for (const key of chipKeys) {
       const p = POS[key];
-      const px = (key === 'C' && !state.dh) ? 50 : p.x;
-      const cx = fx + px / 100 * fw;
+      const cx = fx + p.x / 100 * fw;
       const cy = fy + p.y / 100 * fh;
       const player = playerAt(key);
       parts.push(shareAvatar(cx, cy, R, player, 'shc_' + key));
