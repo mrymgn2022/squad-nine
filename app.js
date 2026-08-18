@@ -945,6 +945,21 @@
     im.src = src;
   }
 
+  /** 文字列（URL or HTML断片）から画像として使えるsrcを取り出す。なければ '' */
+  function imageSrcFrom(s) {
+    s = (s || '').trim();
+    if (/^(https?:\/\/|data:image\/)/i.test(s)) return s;
+    const m = s.match(/<img[^>]+src\s*=\s*["']([^"']+)["']/i);
+    if (m && /^(https?:\/\/|data:image\/)/i.test(m[1])) return m[1];
+    return '';
+  }
+
+  /** srcの種類に応じて取り込み方法を振り分ける */
+  function takeImageSrc(src) {
+    if (/^data:/i.test(src)) loadImageIntoCrop(src);
+    else loadImageUrl(src);
+  }
+
   /** URLから画像を取り込む。fetchできれば File 化（保存時の汚染なし）、だめなら直接読み込み */
   async function loadImageUrl(url) {
     try {
@@ -1027,8 +1042,8 @@
     e.preventDefault(); e.stopPropagation();
     const dt = e.dataTransfer;
     if (dt.files && dt.files[0]) { readFile(dt.files[0]); return; }
-    const url = dt.getData('text/uri-list') || dt.getData('text/plain');
-    if (url && /^https?:\/\//.test(url.trim())) loadImageUrl(url.trim());
+    const src = imageSrcFrom(dt.getData('text/uri-list') || dt.getData('text/html') || dt.getData('text/plain'));
+    if (src) takeImageSrc(src);
   });
 
   function handlePaste(e) {
@@ -1041,9 +1056,9 @@
         return;
       }
     }
-    const text = e.clipboardData && e.clipboardData.getData('text');
-    if (text && /^https?:\/\//.test(text.trim())) {
-      loadImageUrl(text.trim());
+    const src = imageSrcFrom((e.clipboardData && (e.clipboardData.getData('text/html') || e.clipboardData.getData('text'))) || '');
+    if (src) {
+      takeImageSrc(src);
       e.preventDefault();
     }
   }
@@ -1067,6 +1082,8 @@
     };
     if (!navigator.clipboard || !navigator.clipboard.read) { fallback(); return; }
     try {
+      // クリップボードの読み取りは1タップにつき1回しか許可されない端末があるため、
+      // read() の結果だけからすべて取り出す（readTextで読み直さない）
       const items = await navigator.clipboard.read();
       for (const it of items) {
         const type = it.types.find(t => t.indexOf('image') === 0);
@@ -1076,20 +1093,24 @@
           return;
         }
       }
-      // 画像がない場合、テキストとして画像URLが入っていることがある
+      // 画像がない場合、テキスト/HTMLに画像URLが入っていることがある
       // （スマホで画像を「コピー」するとURLだけ入るブラウザがある）
-      let text = '';
-      try { text = ((await navigator.clipboard.readText()) || '').trim(); } catch (err2) { /* 読めなければ空のまま */ }
-      if (/^https?:\/\//.test(text)) { loadImageUrl(text); return; }
-      // HTMLとしてコピーされている場合は <img src> を探す
       for (const it of items) {
-        if (it.types.indexOf('text/html') >= 0) {
-          const html = await (await it.getType('text/html')).text();
-          const mt = html.match(/<img[^>]+src\s*=\s*["']([^"']+)["']/i);
-          if (mt && /^https?:\/\//.test(mt[1])) { loadImageUrl(mt[1]); return; }
+        for (const t of it.types) {
+          if (t.indexOf('text/') !== 0) continue;
+          let s = '';
+          try { s = await (await it.getType(t)).text(); } catch (err2) { continue; }
+          const src = imageSrcFrom(s);
+          if (src) { takeImageSrc(src); return; }
         }
       }
-      toast('画像が見つかりません。画像を長押し→「コピー」でコピーするか、「写真に保存」して「写真を選ぶ / 撮る」を使ってください');
+      // 見つからない: タッチ端末はOS標準のペーストに委ねる（対応形式が広い）
+      if (isTouch && pasteZone) {
+        pasteZone.focus();
+        toast('画像が読み取れませんでした。下の点線の欄を長押しして「ペースト」を選んでください');
+      } else {
+        toast('画像が見つかりません。画像を右クリック→「画像をコピー」してからもう一度押してください');
+      }
     } catch (err) {
       fallback();
     }
@@ -1099,7 +1120,9 @@
     if (!photo.player) return;
     const q = encodeURIComponent(photo.player.nameFlat + ' ' + photo.player.teamShort + ' 選手');
     window.open('https://www.google.com/search?tbm=isch&q=' + q, '_blank', 'noopener');
-    toast('画像を右クリック→「画像をコピー」→ Ctrl+V で貼り付け');
+    toast(isTouch
+      ? '画像を長押し→「コピー」→ アプリに戻って「貼り付け」を押してください'
+      : '画像を右クリック→「画像をコピー」→ Ctrl+V で貼り付け');
   });
 
   $('#btnPhotoRemove').addEventListener('click', () => {
