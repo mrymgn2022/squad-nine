@@ -568,6 +568,9 @@
   let touchDragActive = false;
   document.addEventListener('touchmove', e => { if (touchDragActive) e.preventDefault(); }, { passive: false });
 
+  // iOS Safariのピンチ拡大を無効化（viewportのuser-scalable=noだけでは効かない）
+  document.addEventListener('gesturestart', e => e.preventDefault());
+
   function attachRowDrag(row, fromIdx) {
     row.addEventListener('pointerdown', e => {
       if (e.button !== undefined && e.button !== 0) return;
