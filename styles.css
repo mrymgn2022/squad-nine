@@ -462,6 +462,7 @@ label.pbtn { display: inline-block; }
   padding: 8px 12px; font-size: 13px;
 }
 .menu-row .mini-select { flex: 1 1 auto; max-width: 62%; }
+.menu-row[hidden] { display: none; }   /* display:flex が hidden 属性に勝ってしまうのを防ぐ */
 
 /* ---------- 初回訪問: 応援球団の選択 ---------- */
 .welcome {
