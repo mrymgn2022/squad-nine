@@ -23,7 +23,7 @@
     { key: 'CF', num: 8, kanji: '中', kana: 'センター',     full: '中堅手', group: '外野手', x: 50, y: 9 },
     { key: 'RF', num: 9, kanji: '右', kana: 'ライト',       full: '右翼手', group: '外野手', x: 88, y: 12 },
     // DHは捕手の隣（DHなし時は捕手が中央に寄る）
-    { key: 'DH', num: 0, kanji: '指', kana: 'DH',           full: '指名打者', group: null,   x: 63, y: 85 }
+    { key: 'DH', num: 0, kanji: '指', kana: 'DH',           full: '指名打者', group: null,   x: 72, y: 85 }
   ];
 
   const FIELD_STYLES = (window.FIELD && window.FIELD.styles) || [{ id: 'classic', label: '標準' }];
@@ -392,11 +392,11 @@
       fillAvatar(photo, player);
       avatar.appendChild(photo);
 
-      // DHだけは位置から役割が分からないのでバッジを付ける
+      // DHだけは位置から役割が分からないので右上にDHバッジを付ける
       if (key === 'DH') {
         const badge = document.createElement('div');
         badge.className = 'chip-badge';
-        badge.textContent = posLabel('DH');
+        badge.textContent = 'DH';
         avatar.appendChild(badge);
         chip.classList.add('has-badge');
       }
@@ -1173,6 +1173,14 @@
       parts.push(shareAvatar(cx, cy, R, player, 'shc_' + key));
       parts.push('<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="none" stroke="' +
         (player ? teamColor(player) : '#39434f') + '" stroke-width="' + (R * 0.11) + '"/>');
+      if (key === 'DH') {
+        // 右上のDHバッジ（白箱・濃色文字）
+        const bw2 = R * 0.92, bh2 = R * 0.44;
+        parts.push('<rect x="' + (cx + R * 0.42) + '" y="' + (cy - R * 1.04) + '" width="' + bw2 + '" height="' + bh2 +
+          '" rx="' + (bh2 * 0.25) + '" fill="#f2f2f4"/>');
+        parts.push('<text x="' + (cx + R * 0.42 + bw2 / 2) + '" y="' + (cy - R * 1.04 + bh2 * 0.74) +
+          '" text-anchor="middle" font-family="' + FONT + '" font-size="' + (bh2 * 0.7) + '" font-weight="900" fill="#12171e">DH</text>');
+      }
       if (player) {
         const label = player.number + ' ' + surnameOf(player);
         const fz = R * 0.42;
@@ -1187,15 +1195,16 @@
 
     // --- 打順リスト（球団カラーの帯・番号丸・守備略号・フル名）---
     // LIST_PANEL=true なら右側全体を球団カラーの1枚パネルにする（バー個別ではなく）
-    const LIST_PANEL = !!window.__SHARE_LIST_PANEL;
+    const LIST_PANEL = window.__SHARE_LIST_PANEL !== false;   // 既定は全面パネル
     const names = rows.map(r => r.player ? displayName(r.player) : '未設定');
     const maxLen = Math.max.apply(null, names.map(s => s.length));
-    const nameFz = Math.min(rh * 0.42, (listW - rh * 1.55) / maxLen);
+    const nameFz = Math.min(rh * 0.42, (listW - rh * 1.7) / maxLen);
     if (LIST_PANEL) {
-      const panelY = side ? 0 : sy - 6 * u;
-      const panelH = side ? H : rh * rows.length + 12 * u;
-      const panelX = side ? sx - 12 * u : sx - 6 * u;
-      const panelW = side ? W - panelX : listW + 12 * u;
+      // 横並び: 右側全面 / 縦積み: リスト開始位置から下端まで（フッターもパネル上）
+      const panelY = side ? 0 : sy - 8 * u;
+      const panelH = side ? H : H - panelY;
+      const panelX = side ? sx - 12 * u : 0;
+      const panelW = side ? W - panelX : W;
       parts.push('<rect x="' + panelX + '" y="' + panelY + '" width="' + panelW + '" height="' + panelH +
         '" fill="' + pal.bar + '"/>');
     }
@@ -1215,26 +1224,31 @@
         '" font-size="' + (rh * 0.3) + '" font-weight="900" fill="' + pal.circFg + '">' + r.num + '</text>');
       let nx = sx + rh * 0.78;
       if (r.pos) {
-        parts.push('<rect x="' + nx + '" y="' + (cyy - rh * 0.16) + '" width="' + (rh * 0.44) + '" height="' + (rh * 0.32) +
-          '" rx="' + (4 * u) + '" fill="rgba(0,0,0,0.35)"/>');
-        parts.push('<text x="' + (nx + rh * 0.22) + '" y="' + (cyy + rh * 0.095) + '" text-anchor="middle" font-family="' + FONT +
-          '" font-size="' + (rh * 0.185) + '" font-weight="bold" fill="#ffffff">' + r.pos + '</text>');
+        parts.push('<rect x="' + nx + '" y="' + (cyy - rh * 0.195) + '" width="' + (rh * 0.56) + '" height="' + (rh * 0.39) +
+          '" rx="' + (5 * u) + '" fill="rgba(0,0,0,0.35)"/>');
+        parts.push('<text x="' + (nx + rh * 0.28) + '" y="' + (cyy + rh * 0.115) + '" text-anchor="middle" font-family="' + FONT +
+          '" font-size="' + (rh * 0.25) + '" font-weight="900" fill="#ffffff">' + r.pos + '</text>');
       }
-      nx += rh * 0.56;
+      nx += rh * 0.68;
       parts.push('<text x="' + nx + '" y="' + (cyy + nameFz * 0.36) + '" font-family="' + FONT +
         '" font-size="' + nameFz + '" font-weight="900" fill="' + pal.fg + '"' +
         (r.player ? '' : ' opacity="0.55"') + '>' + esc(names[i]) + '</text>');
     });
 
     // --- フッター: ロゴ＋SQUAD NINE（左）、ドメイン（右）---
+    // 縦積み＋パネル時はフッター全体がパネル上に乗るので文字を白系にする
+    const onPanelL = LIST_PANEL && !side;
+    const onPanelR = LIST_PANEL;
     const fBase = H - 16 * u;
     const fSize = 34 * u;
     parts.push(logoSvg(m, fBase - fSize * 0.82, fSize));
     parts.push('<text x="' + (m + fSize + 10 * u) + '" y="' + fBase + '" font-family="' + FONT +
-      '" font-size="' + (19 * u) + '" font-weight="bold" letter-spacing="' + (3 * u) + '" fill="#8b98a5">SQUAD NINE</text>');
+      '" font-size="' + (19 * u) + '" font-weight="bold" letter-spacing="' + (3 * u) + '" fill="' +
+      (onPanelL ? 'rgba(255,255,255,0.92)' : '#8b98a5') + '">SQUAD NINE</text>');
     if (SHARE_SITE) {
       parts.push('<text x="' + (W - m) + '" y="' + fBase + '" text-anchor="end" font-family="' + FONT +
-        '" font-size="' + (15 * u) + '" font-weight="bold" fill="#ff6b2c">' + esc(SHARE_SITE) + '</text>');
+        '" font-size="' + (15 * u) + '" font-weight="bold" fill="' +
+        (onPanelR ? 'rgba(255,255,255,0.88)' : '#ff6b2c') + '">' + esc(SHARE_SITE) + '</text>');
     }
 
     return '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + W +

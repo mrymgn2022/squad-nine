@@ -113,15 +113,14 @@ button, input, select { font-family: inherit; }
 .avatar-icon { width: 62%; height: 62%; margin-top: 8%; fill: rgba(255,255,255,.42); }
 .chip.empty .avatar-icon { fill: rgba(255,255,255,.34); }
 
-/* DHの駒だけに付ける役割バッジ */
+/* DHの駒の右上に付けるバッジ（白箱） */
 .chip-badge {
-  position: absolute; left: 50%; bottom: -9px; transform: translateX(-50%);
-  background: var(--team); color: #fff; font-size: clamp(9px, 1.05vw, 11px); font-weight: 800;
-  border-radius: 8px; padding: 1px 7px; line-height: 1.6;
-  border: 1px solid rgba(0,0,0,.4); white-space: nowrap;
+  position: absolute; top: -7px; right: -12px; z-index: 2;
+  background: #f2f2f4; color: #12171e; font-size: clamp(9px, 1.05vw, 11px); font-weight: 900;
+  border-radius: 6px; padding: 1px 6px; line-height: 1.6;
+  white-space: nowrap;
   box-shadow: 0 2px 6px rgba(0,0,0,.55);
 }
-.chip.has-badge .chip-name { margin-top: 11px; }
 .chip-name {
   margin-top: -8px;                 /* アイコンの下端に重ねて縦の占有を減らす */
   position: relative; z-index: 2;
