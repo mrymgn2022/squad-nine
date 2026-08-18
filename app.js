@@ -660,34 +660,57 @@
     document.addEventListener('pointercancel', onCancel);
   }
 
-  /** フェンスなしダイヤモンドの盤面（viewBox 1000x900）
-   *  ※球場デザイン（field.js）は凍結中。復活時はここを FIELD.build に戻す */
-  function diamondFieldSvg(prefix) {
-    const p = prefix || 'bd';
-    const top = [500, 216], right = [800, 495], bot = [500, 774], left = [200, 495];
-    const d = 'M ' + top + ' L ' + right + ' L ' + bot + ' L ' + left + ' Z';
-    const parts = [];
-    parts.push('<pattern id="' + p + 'st" width="118" height="118" patternUnits="userSpaceOnUse">' +
-      '<rect width="118" height="118" fill="#10151c"/>' +
-      '<rect width="59" height="118" fill="#ffffff" opacity="0.018"/></pattern>');
-    parts.push('<rect x="0" y="0" width="1000" height="900" fill="url(#' + p + 'st)"/>');
-    parts.push('<path d="' + d + '" fill="none" stroke="#8a5a34" stroke-width="20" stroke-linejoin="round" opacity="0.9"/>');
-    parts.push('<path d="' + d + '" fill="none" stroke="#c8925c" stroke-width="6" stroke-linejoin="round" opacity="0.9"/>');
-    [top, right, left].forEach(pt => {
-      parts.push('<rect x="' + (pt[0] - 20) + '" y="' + (pt[1] - 20) + '" width="40" height="40" transform="rotate(45 ' + pt[0] + ' ' + pt[1] + ')" fill="#e9e4d6"/>');
+  /** オーソドックスな内野（土のダイヤ＋内側の芝＋白線）を (ox,oy,w,h) に描く
+   *  盤面と共有画像で共用。※球場デザイン（field.js）は凍結中 */
+  function infieldSvg(ox, oy, w, h, pre, withBg) {
+    const k = Math.min(w / 1000, h / 900);
+    const F = f => [ox + f[0] * w, oy + f[1] * h];
+    const T = F([0.5, 0.24]), Rt = F([0.8, 0.55]), B = F([0.5, 0.86]), L = F([0.2, 0.55]);
+    const Cc = F([0.5, 0.55]);
+    const rhombus = t => 'M ' + [T, Rt, B, L].map(p =>
+      (Cc[0] + (p[0] - Cc[0]) * t) + ' ' + (Cc[1] + (p[1] - Cc[1]) * t)).join(' L ') + ' Z';
+    const out = [];
+    out.push('<defs>');
+    out.push('<linearGradient id="' + pre + 'gr" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0%" stop-color="#3a8c4e"/><stop offset="100%" stop-color="#2b6b3b"/></linearGradient>');
+    out.push('<linearGradient id="' + pre + 'dt" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0%" stop-color="#b3763f"/><stop offset="100%" stop-color="#96602f"/></linearGradient>');
+    out.push('<pattern id="' + pre + 'mw" width="' + (72 * k) + '" height="' + (72 * k) + '" patternUnits="userSpaceOnUse">' +
+      '<rect width="' + (36 * k) + '" height="' + (72 * k) + '" fill="#ffffff" opacity="0.035"/></pattern>');
+    if (withBg) {
+      out.push('<pattern id="' + pre + 'st" width="' + (118 * k) + '" height="' + (118 * k) + '" patternUnits="userSpaceOnUse">' +
+        '<rect width="' + (118 * k) + '" height="' + (118 * k) + '" fill="#10151c"/>' +
+        '<rect width="' + (59 * k) + '" height="' + (118 * k) + '" fill="#ffffff" opacity="0.018"/></pattern>');
+    }
+    out.push('</defs>');
+    if (withBg) out.push('<rect x="' + ox + '" y="' + oy + '" width="' + w + '" height="' + h + '" fill="url(#' + pre + 'st)"/>');
+    // 土のダイヤ（外周を丸くふくらませた帯）
+    out.push('<path d="' + rhombus(1) + '" fill="url(#' + pre + 'dt)" stroke="url(#' + pre + 'dt)" stroke-width="' + (58 * k) + '" stroke-linejoin="round"/>');
+    // 内側の芝
+    out.push('<path d="' + rhombus(0.72) + '" fill="url(#' + pre + 'gr)"/>');
+    out.push('<path d="' + rhombus(0.72) + '" fill="url(#' + pre + 'mw)"/>');
+    // ベースライン（白）
+    out.push('<path d="' + rhombus(1) + '" fill="none" stroke="#f2ead9" stroke-width="' + (6 * k) + '" opacity="0.85"/>');
+    // マウンド
+    out.push('<circle cx="' + Cc[0] + '" cy="' + Cc[1] + '" r="' + (54 * k) + '" fill="#8a5a34"/>');
+    out.push('<rect x="' + (Cc[0] - 12 * k) + '" y="' + (Cc[1] - 4 * k) + '" width="' + (24 * k) + '" height="' + (8 * k) + '" fill="#f2ead9"/>');
+    // 本塁まわりの土と本塁
+    out.push('<circle cx="' + B[0] + '" cy="' + B[1] + '" r="' + (62 * k) + '" fill="url(#' + pre + 'dt)"/>');
+    out.push('<path d="M ' + (B[0] - 16 * k) + ' ' + (B[1] - 12 * k) + ' h' + (32 * k) + ' v' + (14 * k) +
+      ' l-' + (16 * k) + ' ' + (14 * k) + ' l-' + (16 * k) + ' -' + (14 * k) + ' z" fill="#f2ead9"/>');
+    // 塁ベース（白）
+    [T, Rt, L].forEach(p => {
+      out.push('<rect x="' + (p[0] - 17 * k) + '" y="' + (p[1] - 17 * k) + '" width="' + (34 * k) + '" height="' + (34 * k) +
+        '" transform="rotate(45 ' + p[0] + ' ' + p[1] + ')" fill="#f2ead9"/>');
     });
-    parts.push('<path d="M ' + (bot[0] - 20) + ' ' + (bot[1] - 15) + ' h40 v18 l-20 18 l-20 -18 z" fill="#e9e4d6"/>');
-    const m = [500, 495];
-    parts.push('<rect x="' + (m[0] - 30) + '" y="' + (m[1] - 30) + '" width="60" height="60" transform="rotate(45 ' + m[0] + ' ' + m[1] + ')" fill="#8a5a34"/>');
-    parts.push('<rect x="' + (m[0] - 12) + '" y="' + (m[1] - 4) + '" width="24" height="8" fill="#e9e4d6"/>');
-    return parts.join('');
+    return out.join('');
   }
 
   function renderFieldArt() {
     const svg = document.querySelector('.field-svg');
     if (!svg) return;
     svg.setAttribute('viewBox', '0 0 1000 900');
-    svg.innerHTML = diamondFieldSvg('bd');
+    svg.innerHTML = infieldSvg(0, 0, 1000, 900, 'bd', true);
   }
 
   function renderAll() {
@@ -1006,11 +1029,23 @@
   }
   document.addEventListener('paste', handlePaste);
 
+  // タッチ端末用: 長押し→ペーストの受け皿。貼り付けは document の paste ハンドラが処理する
+  const pasteZone = $('#pasteZone');
+  if (pasteZone) {
+    pasteZone.addEventListener('input', () => { pasteZone.textContent = ''; });   // 文字が入ったら消す
+  }
+  const isTouch = window.matchMedia && window.matchMedia('(hover: none)').matches;
+
   $('#btnPhotoPaste').addEventListener('click', async () => {
-    if (!navigator.clipboard || !navigator.clipboard.read) {
-      toast('Ctrl+V で貼り付けてください');
-      return;
-    }
+    const fallback = () => {
+      if (isTouch && pasteZone) {
+        pasteZone.focus();
+        toast('下の点線の欄を長押しして「ペースト」を選んでください');
+      } else {
+        toast('Ctrl+V で貼り付けてください');
+      }
+    };
+    if (!navigator.clipboard || !navigator.clipboard.read) { fallback(); return; }
     try {
       const items = await navigator.clipboard.read();
       for (const it of items) {
@@ -1023,7 +1058,7 @@
       }
       toast('クリップボードに画像がありません');
     } catch (err) {
-      toast('Ctrl+V で貼り付けてください');
+      fallback();
     }
   });
 
@@ -1095,27 +1130,10 @@
   }
 
   /** 共有画像のフィールド部分（フェンスなしダイヤモンド）を (fx,fy,fw,fh) に描く */
+  /** 共有画像のフィールド: 盤面と同じオーソドックスな内野を使う */
   function shareFieldSvg(fx, fy, fw, fh) {
-    const k = fw / 1000;
-    const pt = f => [fx + f[0] * fw, fy + f[1] * fh];
-    const top = pt([0.5, 0.24]), right = pt([0.8, 0.55]), bot = pt([0.5, 0.86]), left = pt([0.2, 0.55]);
-    const d = 'M ' + top + ' L ' + right + ' L ' + bot + ' L ' + left + ' Z';
-    const out = [];
-    out.push('<path d="' + d + '" fill="none" stroke="#8a5a34" stroke-width="' + (20 * k) + '" stroke-linejoin="round" opacity="0.9"/>');
-    out.push('<path d="' + d + '" fill="none" stroke="#c8925c" stroke-width="' + (6 * k) + '" stroke-linejoin="round" opacity="0.9"/>');
-    [top, right, left].forEach(p => {
-      out.push('<rect x="' + (p[0] - 20 * k) + '" y="' + (p[1] - 20 * k) + '" width="' + (40 * k) + '" height="' + (40 * k) +
-        '" transform="rotate(45 ' + p[0] + ' ' + p[1] + ')" fill="#e9e4d6"/>');
-    });
-    out.push('<path d="M ' + (bot[0] - 20 * k) + ' ' + (bot[1] - 15 * k) + ' h' + (40 * k) + ' v' + (18 * k) +
-      ' l-' + (20 * k) + ' ' + (18 * k) + ' l-' + (20 * k) + ' -' + (18 * k) + ' z" fill="#e9e4d6"/>');
-    const mc = pt([0.5, 0.55]);
-    out.push('<rect x="' + (mc[0] - 30 * k) + '" y="' + (mc[1] - 30 * k) + '" width="' + (60 * k) + '" height="' + (60 * k) +
-      '" transform="rotate(45 ' + mc[0] + ' ' + mc[1] + ')" fill="#8a5a34"/>');
-    out.push('<rect x="' + (mc[0] - 12 * k) + '" y="' + (mc[1] - 4 * k) + '" width="' + (24 * k) + '" height="' + (8 * k) + '" fill="#e9e4d6"/>');
-    return out.join('');
+    return infieldSvg(fx, fy, fw, fh, 'shf', false);
   }
-
   function buildShareSVG(W, H) {
     const u = Math.min(W, H) / 1080;
     const pal = currentPalette();

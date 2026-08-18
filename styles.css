@@ -403,6 +403,17 @@ body.nota-kana .c-pos { width: 104px; }
 .range-row { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--fg-dim); margin-bottom: 14px; }
 .range-row input { flex: 1; }
 .photo-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+/* タッチ端末用の貼り付け欄（長押し→ペーストの受け皿） */
+.paste-zone {
+  display: none;
+  margin-top: 10px; padding: 12px 10px; min-height: 20px;
+  border: 1.5px dashed var(--line); border-radius: 10px;
+  font-size: 12px; color: var(--fg); text-align: center;
+  -webkit-user-select: text; user-select: text;
+}
+.paste-zone:empty::before { content: attr(data-ph); color: #64707d; }
+.paste-zone:focus { outline: none; border-color: var(--accent); }
+@media (hover: none) { .paste-zone { display: block; } }
 .photo-actions .pbtn { flex: 0 1 auto; }
 label.pbtn { display: inline-block; }
 

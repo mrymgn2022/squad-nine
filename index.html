@@ -18,7 +18,7 @@
 <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="icons/icon-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="stylesheet" href="styles.css?v=23">
+<link rel="stylesheet" href="styles.css?v=24">
 </head>
 <body>
 
@@ -141,7 +141,8 @@
         <button class="pbtn" id="btnPhotoPaste">貼り付け</button>
         <button class="pbtn danger" id="btnPhotoRemove">削除</button>
       </div>
-      <p class="hint small">検索した画像は、右クリック→「画像をコピー」してから<b>貼り付け</b>（Ctrl+V）してください。写真はこの端末内にのみ保存されます。</p>
+      <div id="pasteZone" class="paste-zone" contenteditable="true" data-ph="コピーした画像を、ここを長押し →「ペースト」で貼り付け"></div>
+      <p class="hint small">検索した画像を「画像をコピー」してから貼り付けてください（PCはCtrl+V）。写真はこの端末内にのみ保存されます。</p>
     </div>
     <div class="modal-foot">
       <button class="pbtn" data-close>キャンセル</button>
@@ -218,9 +219,9 @@
 
 <div class="toast" id="toast" hidden></div>
 
-<script src="data/npb-players.js?v=23"></script>
-<script src="data/presets.js?v=23"></script>
-<script src="field.js?v=23"></script>
-<script src="app.js?v=23"></script>
+<script src="data/npb-players.js?v=24"></script>
+<script src="data/presets.js?v=24"></script>
+<script src="field.js?v=24"></script>
+<script src="app.js?v=24"></script>
 </body>
 </html>
