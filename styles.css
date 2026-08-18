@@ -267,7 +267,10 @@ body.nota-kana .c-pos { width: 104px; }
   font-size: 11px; color: var(--fg-dim); margin-top: 2px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.ord-sub .ord-team-s { display: none; }   /* 新聞略記は狭い画面でだけ出す */
+.ord-sub .ord-team-s { display: none; }
+/* フル球団名が入りきらない行はJS(fitTeamNames)がis-abbrを付けて新聞略記に切り替える */
+.ord-sub.is-abbr .ord-team { display: none; }
+.ord-sub.is-abbr .ord-team-s { display: inline; }
 .ord-btns { display: flex; gap: 4px; justify-content: flex-end; }
 .ord-btns button {
   background: transparent; border: 1px solid var(--line); color: var(--fg-dim);
@@ -319,18 +322,6 @@ body.nota-kana .c-pos { width: 104px; }
   .ord-sub { font-size: 10px; }
   .order-row td { padding: 7px 3px; }
   .order-table th { padding: 0 3px 6px; }
-}
-
-/* カナ表記は守備列が広がる分、フル球団名が入る下限が上がる（390px〜） */
-@media (max-width: 389px) {
-  body.nota-kana .ord-sub .ord-team { display: none; }
-  body.nota-kana .ord-sub .ord-team-s { display: inline; }
-}
-
-/* 極小幅ではフル球団名（最長: ソフトバンク）が入りきらないため新聞略記に切替 */
-@media (max-width: 374px) {
-  .ord-sub .ord-team { display: none; }
-  .ord-sub .ord-team-s { display: inline; }
 }
 
 .hint { font-size: 11px; color: #64707d; margin: 10px 2px 0; }

@@ -454,7 +454,32 @@
     });
     // DHありの時は打順の下に投手行を出す（打順には入らないので並べ替え不可）
     if (state.dh) el.orderBody.appendChild(makeOrderRow('P', 'P', -1));
+    fitTeamNames();
   }
+
+  /** フル球団名が入りきらない行だけ新聞略記（巨・ソ等）に切り替える。
+      画面幅・表記モード・背番号の桁数・端末フォントの差に自動で追従する */
+  function fitTeamNames() {
+    const subs = Array.from(el.orderBody.querySelectorAll('.ord-sub'));
+    subs.forEach(s => s.classList.remove('is-abbr'));
+    // テーブルの列幅は行の内容で再計算されるため、増えなくなるまで数回まわす
+    for (let i = 0; i < 3; i++) {
+      let changed = false;
+      subs.forEach(s => {
+        if (!s.classList.contains('is-abbr') && s.scrollWidth > s.clientWidth) {
+          s.classList.add('is-abbr');
+          changed = true;
+        }
+      });
+      if (!changed) break;
+    }
+  }
+  window.addEventListener('resize', () => {
+    clearTimeout(fitTeamNames._t);
+    fitTeamNames._t = setTimeout(fitTeamNames, 120);
+  });
+  // Webフォントの読み込みで幅が変わることがあるため、確定後にもう一度
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fitTeamNames());
 
   /** 打順テーブルの1行を作る。idx<0 は打順外の行（投手行）で、▲▼とドラッグなし */
   function makeOrderRow(key, noLabel, idx) {
