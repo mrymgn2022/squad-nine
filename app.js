@@ -1259,8 +1259,7 @@
       fw = W - m * 2;
       const availH = H - m - footH;
       // 下段チップ(y=85%)の名前札が枠の下にはみ出す分を見込んだ実効高さ係数
-      // (0.85 + R/fh*1.875 ≒ 1.04, R=fh*0.098のとき)
-      const OVERHANG = 1.045;
+      const OVERHANG = 1.01;
       fh = Math.min(fw * 0.62, availH * 0.52);
       rh = Math.min(96 * u, (availH - fh * OVERHANG - gap) / rows.length);
       let slack = availH - fh * OVERHANG - gap - rh * rows.length;
@@ -1276,12 +1275,14 @@
     parts.push(shareFieldSvg(fx, fy, fw, fh));
 
     // --- 選手チップ（背番号＋姓の名前札つき）---
-    const R = Math.min(fw * 0.075, fh * 0.098);
+    const R = Math.min(fw * 0.066, fh * 0.085);
     const chipKeys = state.dh ? FIELD_KEYS.concat('DH') : FIELD_KEYS;
     for (const key of chipKeys) {
       const p = POS[key];
+      // 共有画像ではCFを少し上げ、名前札が二塁ベースにかからないようにする
+      const py = key === 'CF' ? 10 : p.y;
       const cx = fx + p.x / 100 * fw;
-      const cy = fy + p.y / 100 * fh;
+      const cy = fy + py / 100 * fh;
       const player = playerAt(key);
       parts.push(shareAvatar(cx, cy, R, player, 'shc_' + key));
       parts.push('<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="none" stroke="' +
@@ -1301,9 +1302,11 @@
         const fz = R * 0.42;
         const w = label.length * fz * 0.92 + fz * 1.2;
         const hh = fz * 1.75;
-        parts.push('<rect x="' + (cx - w / 2) + '" y="' + (cy + R + R * 0.14) + '" width="' + w + '" height="' + hh +
+        // 名前札は円の下縁に少し重ねる（楽天公式風。下に離すと二塁ベース等を隠す）
+        const py2 = cy + R * 0.78;
+        parts.push('<rect x="' + (cx - w / 2) + '" y="' + py2 + '" width="' + w + '" height="' + hh +
           '" rx="' + (hh * 0.28) + '" fill="rgba(8,12,17,0.92)" stroke="rgba(255,255,255,0.14)"/>');
-        parts.push('<text x="' + cx + '" y="' + (cy + R + R * 0.14 + hh * 0.72) + '" text-anchor="middle" font-family="' + FONT +
+        parts.push('<text x="' + cx + '" y="' + (py2 + hh * 0.72) + '" text-anchor="middle" font-family="' + FONT +
           '" font-size="' + fz + '" font-weight="bold" fill="#ffffff">' + esc(label) + '</text>');
       }
     }
