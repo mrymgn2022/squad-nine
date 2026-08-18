@@ -1258,22 +1258,25 @@
     } else {
       fw = W - m * 2;
       const availH = H - m - footH;
+      // 下段チップ(y=85%)の名前札が枠の下にはみ出す分を見込んだ実効高さ係数
+      // (0.85 + R/fh*1.875 ≒ 1.04, R=fh*0.098のとき)
+      const OVERHANG = 1.045;
       fh = Math.min(fw * 0.62, availH * 0.52);
-      rh = Math.min(96 * u, (availH - fh - gap) / rows.length);
-      let slack = availH - fh - gap - rh * rows.length;
-      const grow = Math.min(Math.max(0, slack), fw * 0.75 - fh);
-      fh += grow; slack -= grow;
+      rh = Math.min(96 * u, (availH - fh * OVERHANG - gap) / rows.length);
+      let slack = availH - fh * OVERHANG - gap - rh * rows.length;
+      const grow = Math.min(Math.max(0, slack) / OVERHANG, fw * 0.75 - fh);
+      fh += grow; slack -= grow * OVERHANG;
       fx = m;
       fy = m + Math.max(0, slack) / 2;
       sx = m; listW = fw;
-      sy = fy + fh + gap;
+      sy = fy + fh * OVERHANG + gap;
     }
 
     // --- フィールド ---
     parts.push(shareFieldSvg(fx, fy, fw, fh));
 
     // --- 選手チップ（背番号＋姓の名前札つき）---
-    const R = Math.min(fw * 0.063, fh * 0.082);
+    const R = Math.min(fw * 0.075, fh * 0.098);
     const chipKeys = state.dh ? FIELD_KEYS.concat('DH') : FIELD_KEYS;
     for (const key of chipKeys) {
       const p = POS[key];
@@ -1285,10 +1288,12 @@
         (player ? teamColor(player) : '#39434f') + '" stroke-width="' + (R * 0.11) + '"/>');
       if (key === 'DH') {
         // 右上のDHバッジ（白箱・濃色文字）
+        // 円の右上の縁に重ねる（上に離すと隣の名前札に当たる）
         const bw2 = R * 0.92, bh2 = R * 0.44;
-        parts.push('<rect x="' + (cx + R * 0.42) + '" y="' + (cy - R * 1.04) + '" width="' + bw2 + '" height="' + bh2 +
+        const bx2 = cx + R * 0.38, by2 = cy - R * 0.92;
+        parts.push('<rect x="' + bx2 + '" y="' + by2 + '" width="' + bw2 + '" height="' + bh2 +
           '" rx="' + (bh2 * 0.25) + '" fill="#f2f2f4"/>');
-        parts.push('<text x="' + (cx + R * 0.42 + bw2 / 2) + '" y="' + (cy - R * 1.04 + bh2 * 0.74) +
+        parts.push('<text x="' + (bx2 + bw2 / 2) + '" y="' + (by2 + bh2 * 0.74) +
           '" text-anchor="middle" font-family="' + FONT + '" font-size="' + (bh2 * 0.7) + '" font-weight="900" fill="#12171e">DH</text>');
       }
       if (player) {
@@ -1308,7 +1313,7 @@
     const LIST_PANEL = window.__SHARE_LIST_PANEL !== false;   // 既定は全面パネル
     const names = rows.map(r => r.player ? displayName(r.player) : '未設定');
     const maxLen = Math.max.apply(null, names.map(s => s.length));
-    const nameFz = Math.min(rh * 0.42, (listW - rh * 1.7) / maxLen);
+    const nameFz = Math.min(rh * 0.5, (listW - rh * 1.7) / maxLen);
     if (LIST_PANEL) {
       // 横並び: 右側全面 / 縦積み: リスト開始位置から下端まで（フッターもパネル上）
       const panelY = side ? 0 : sy - 8 * u;
