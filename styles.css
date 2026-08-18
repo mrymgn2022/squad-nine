@@ -164,16 +164,15 @@ button, input, select { font-family: inherit; }
   pointer-events: none;
 }
 
-/* 盤面リセット */
+/* 盤面リセット（上部バー内） */
 .reset-btn {
-  position: absolute; top: 12px; right: 12px; z-index: 3;
   display: flex; align-items: center; gap: 5px;
-  background: rgba(10,14,19,.78); border: 1px solid rgba(255,255,255,.18);
-  color: #e8edf3; border-radius: 9px; padding: 7px 11px;
+  margin-left: auto;
+  background: var(--bg-3); border: 1px solid var(--line);
+  color: var(--fg-dim); border-radius: 9px; padding: 8px 11px;
   font-size: 12px; font-weight: 700; cursor: pointer;
-  backdrop-filter: blur(4px);
 }
-.reset-btn:hover { background: var(--danger); border-color: var(--danger); }
+.reset-btn:hover { background: var(--danger); border-color: var(--danger); color: #fff; }
 .reset-btn svg { width: 14px; height: 14px; fill: currentColor; }
 
 /* bench / DH */
@@ -293,7 +292,6 @@ body.nota-kana .c-pos { width: 104px; }
   /* グラウンドは画面幅いっぱいまで広げる */
   .field-pane { margin-left: -6px; margin-right: -6px; }
   .field-bg { border-radius: 0; border-left: none; border-right: none; }
-  .reset-btn { top: 8px; right: 8px; }
   .order-pane { padding: 12px 8px; border-radius: 12px; }
   .chip { min-width: 52px; }
   .chip-name { font-size: 10px; padding: 1px 5px; }
