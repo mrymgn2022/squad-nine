@@ -310,17 +310,24 @@ body.nota-kana .c-pos { width: 104px; }
   .c-pos { width: 42px; }
   body.nota-kana .c-pos { width: 76px; }
   .ord-pos { font-size: 10px; padding: 2px 5px; white-space: nowrap; }
-  .c-act { width: 80px; }
+  .c-act { width: 76px; }
   .ord-btns { gap: 3px; }
   .ord-btns button { width: 36px; height: 36px; font-size: 12px; }
   .ord-avatar { width: 40px; height: 40px; }
-  .ord-name { gap: 6px; }
+  .ord-name { gap: 4px; }
   .ord-pname { font-size: 13px; }
   .ord-sub { font-size: 10px; }
-  .ord-sub .ord-team { display: none; }     /* フル球団名 → 新聞略記に切替 */
-  .ord-sub .ord-team-s { display: inline; }
   .order-row td { padding: 7px 3px; }
   .order-table th { padding: 0 3px 6px; }
+  /* カナ表記は守備列が広がり「ソフトバンク」が入りきらないため新聞略記 */
+  body.nota-kana .ord-sub .ord-team { display: none; }
+  body.nota-kana .ord-sub .ord-team-s { display: inline; }
+}
+
+/* 極小幅ではフル球団名（最長: ソフトバンク）が入りきらないため新聞略記に切替 */
+@media (max-width: 374px) {
+  .ord-sub .ord-team { display: none; }
+  .ord-sub .ord-team-s { display: inline; }
 }
 
 .hint { font-size: 11px; color: #64707d; margin: 10px 2px 0; }
