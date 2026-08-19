@@ -170,7 +170,6 @@
   const state = {
     title: '',
     dh: true,
-    notation: 'kanji',       // 'kanji' | 'kana'
     myTeam: TEAMS.length ? TEAMS[0].id : '',
     fieldStyle: 'koshien',   // 球場デザイン (field.js)
     assign: {},              // posKey -> playerId
@@ -190,7 +189,6 @@
         if (s && typeof s === 'object') {
           if (typeof s.title === 'string') state.title = s.title;
           if (typeof s.dh === 'boolean') state.dh = s.dh;
-          if (s.notation === 'kana' || s.notation === 'kanji') state.notation = s.notation;
           if (typeof s.myTeam === 'string' && TEAMS.some(t => t.id === s.myTeam)) state.myTeam = s.myTeam;
           if (typeof s.fieldStyle === 'string' && FIELD_STYLES.some(f => f.id === s.fieldStyle)) state.fieldStyle = s.fieldStyle;
           if (s.assign && typeof s.assign === 'object') {
@@ -226,7 +224,7 @@
 
   function encodeState() {
     const styleIdx = Math.max(0, FIELD_STYLES.findIndex(f => f.id === state.fieldStyle));
-    const flags = (state.dh ? 1 : 0) + '' + (state.notation === 'kana' ? 1 : 0) + styleIdx.toString(36);
+    const flags = (state.dh ? 1 : 0) + '0' + styleIdx.toString(36);   // 2文字目は旧・表記フラグ（互換のため残す）
     const ids = POS_ORDER.map(k => {
       const id = state.assign[k];
       if (!id) return '';
@@ -244,7 +242,6 @@
     try {
       const flags = parts[1];
       state.dh = flags[0] === '1';
-      state.notation = flags[1] === '1' ? 'kana' : 'kanji';
       const style = FIELD_STYLES[parseInt(flags[2], 36)];
       if (style) state.fieldStyle = style.id;
 
@@ -307,10 +304,9 @@
     return id ? BY_ID.get(String(id)) || null : null;
   }
 
+  /** 守備位置の表示は一律英語表記（P/C/1B/…）。漢字カナ切替は廃止した */
   function posLabel(posKey) {
-    const p = POS[posKey];
-    if (!p) return '';
-    return state.notation === 'kanji' ? p.kanji : p.kana;
+    return POS_EN[posKey] || posKey;
   }
 
   function teamColor(player) {
@@ -353,7 +349,6 @@
     orderBody: $('#orderBody'),
     dhSeg: $('#dhSeg'),
     myTeam: $('#myTeam'),
-    notationLabel: $('#notationLabel'),
     toast: $('#toast')
   };
 
@@ -698,8 +693,9 @@
 
   /** オーソドックスな内野（土のダイヤ＋内側の芝＋白線）を (ox,oy,w,h) に描く
    *  盤面と共有画像で共用。※球場デザイン（field.js）は凍結中 */
-  function infieldSvg(ox, oy, w, h, pre, withBg) {
+  function infieldSvg(ox, oy, w, h, pre, withBg, ext) {
     const k = Math.min(w / 1000, h / 900);
+    ext = ext || [ox, oy, ox + w, oy + h];   // ファウルラインを延長する範囲（既定は自枠）
     const F = f => [ox + f[0] * w, oy + f[1] * h];
     const T = F([0.5, 0.24]), Rt = F([0.8, 0.55]), B = F([0.5, 0.86]), L = F([0.2, 0.55]);
     const Cc = F([0.5, 0.55]);
@@ -727,6 +723,20 @@
     out.push('<path d="' + rhombus(0.72) + '" fill="url(#' + pre + 'mw)"/>');
     // ベースライン（白）
     out.push('<path d="' + rhombus(1) + '" fill="none" stroke="#f2ead9" stroke-width="' + (6 * k) + '" opacity="0.85"/>');
+    // ファウルライン: 本塁→一塁/三塁の延長線を ext の端まで伸ばす
+    const foulEnd = (base) => {
+      const dx = base[0] - B[0], dy = base[1] - B[1];
+      let t = Infinity;
+      if (dx > 0) t = Math.min(t, (ext[2] - base[0]) / dx);
+      if (dx < 0) t = Math.min(t, (ext[0] - base[0]) / dx);
+      if (dy < 0) t = Math.min(t, (ext[1] - base[1]) / dy);
+      return [base[0] + dx * t, base[1] + dy * t];
+    };
+    [Rt, L].forEach(base => {
+      const e = foulEnd(base);
+      out.push('<line x1="' + base[0] + '" y1="' + base[1] + '" x2="' + e[0] + '" y2="' + e[1] +
+        '" stroke="#f2ead9" stroke-width="' + (6 * k) + '" opacity="0.85"/>');
+    });
     // マウンド
     out.push('<circle cx="' + Cc[0] + '" cy="' + Cc[1] + '" r="' + (54 * k) + '" fill="#8a5a34"/>');
     out.push('<rect x="' + (Cc[0] - 12 * k) + '" y="' + (Cc[1] - 4 * k) + '" width="' + (24 * k) + '" height="' + (8 * k) + '" fill="#f2ead9"/>');
@@ -1224,8 +1234,9 @@
 
   /** 共有画像のフィールド部分（フェンスなしダイヤモンド）を (fx,fy,fw,fh) に描く */
   /** 共有画像のフィールド: 盤面と同じオーソドックスな内野を使う */
-  function shareFieldSvg(fx, fy, fw, fh) {
-    return infieldSvg(fx, fy, fw, fh, 'shf', false);
+  function shareFieldSvg(fx, fy, fw, fh, W, H) {
+    // ファウルラインは画像の端まで延長する
+    return infieldSvg(fx, fy, fw, fh, 'shf', false, [0, 0, W, H]);
   }
   function buildShareSVG(W, H) {
     const u = Math.min(W, H) / 1080;
@@ -1272,7 +1283,7 @@
     }
 
     // --- フィールド ---
-    parts.push(shareFieldSvg(fx, fy, fw, fh));
+    parts.push(shareFieldSvg(fx, fy, fw, fh, W, H));
 
     // --- 選手チップ（背番号＋姓の名前札つき）---
     const R = Math.min(fw * 0.066, fh * 0.085);
@@ -1502,18 +1513,6 @@
   // ============================================================
   // その他の操作
   // ============================================================
-  function syncNotationUi() {
-    el.notationLabel.textContent = state.notation === 'kanji' ? '漢字' : 'カナ';
-    document.body.classList.toggle('nota-kana', state.notation === 'kana');
-  }
-
-  $('#btnNotation').addEventListener('click', () => {
-    state.notation = state.notation === 'kanji' ? 'kana' : 'kanji';
-    syncNotationUi();
-    saveLineup();
-    renderAll();
-  });
-
   el.dhSeg.addEventListener('click', e => {
     const btn = e.target.closest('.seg-btn');
     if (!btn) return;
@@ -1684,7 +1683,6 @@
     const fs = $('#fieldStyle');
     fs.innerHTML = FIELD_STYLES.map(f => '<option value="' + f.id + '">' + f.label + '</option>').join('');
     fs.value = state.fieldStyle;
-    syncNotationUi();
     updateDhSeg();
     renderFieldArt();
     renderAll();

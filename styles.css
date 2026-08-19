@@ -245,8 +245,6 @@ button, input, select { font-family: inherit; }
 .order-row.pitcher-row td { border-top: 2px solid #2c3742; }
 body.dragging-order { user-select: none; -webkit-user-select: none; cursor: grabbing; }
 
-/* カナ表記のとき守備バッジ列を広げて1行で収める（bodyにnota-kanaが付く） */
-body.nota-kana .c-pos { width: 104px; }
 .order-row td { padding: 9px 8px; vertical-align: middle; }
 .ord-no { font-size: 17px; font-weight: 900; color: var(--accent); text-align: center; }
 .ord-pos {
@@ -311,7 +309,6 @@ body.nota-kana .c-pos { width: 104px; }
   .c-no { width: 24px; }
   .ord-no { font-size: 14px; }
   .c-pos { width: 42px; }
-  body.nota-kana .c-pos { width: 76px; }
   .ord-pos { font-size: 10px; padding: 2px 5px; white-space: nowrap; }
   .c-act { width: 76px; }
   .ord-btns { gap: 3px; }
