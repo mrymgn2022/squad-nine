@@ -20,7 +20,7 @@
     { key: '3B', num: 5, kanji: '三', kana: 'サード',       full: '三塁手', group: '内野手', x: 19, y: 58 },
     { key: 'SS', num: 6, kanji: '遊', kana: 'ショート',     full: '遊撃手', group: '内野手', x: 33, y: 35 },
     { key: 'LF', num: 7, kanji: '左', kana: 'レフト',       full: '左翼手', group: '外野手', x: 12, y: 21 },
-    { key: 'CF', num: 8, kanji: '中', kana: 'センター',     full: '中堅手', group: '外野手', x: 50, y: 11.5 },
+    { key: 'CF', num: 8, kanji: '中', kana: 'センター',     full: '中堅手', group: '外野手', x: 50, y: 10.5 },
     { key: 'RF', num: 9, kanji: '右', kana: 'ライト',       full: '右翼手', group: '外野手', x: 88, y: 21 },
     // DHは捕手の隣（DHなし時は捕手が中央に寄る）
     { key: 'DH', num: 0, kanji: '指', kana: 'DH',           full: '指名打者', group: null,   x: 72, y: 85 }
@@ -702,20 +702,30 @@
     const rhombus = t => 'M ' + [T, Rt, B, L].map(p =>
       (Cc[0] + (p[0] - Cc[0]) * t) + ' ' + (Cc[1] + (p[1] - Cc[1]) * t)).join(' L ') + ' Z';
     const out = [];
+    const bgX = ext[0], bgY = ext[1], bgW = ext[2] - ext[0], bgH = ext[3] - ext[1];
     out.push('<defs>');
     out.push('<linearGradient id="' + pre + 'gr" x1="0" y1="0" x2="0" y2="1">' +
-      '<stop offset="0%" stop-color="#3a8c4e"/><stop offset="100%" stop-color="#2b6b3b"/></linearGradient>');
+      '<stop offset="0%" stop-color="#3f9256"/><stop offset="100%" stop-color="#2a6a3a"/></linearGradient>');
     out.push('<linearGradient id="' + pre + 'dt" x1="0" y1="0" x2="0" y2="1">' +
       '<stop offset="0%" stop-color="#b3763f"/><stop offset="100%" stop-color="#96602f"/></linearGradient>');
-    out.push('<pattern id="' + pre + 'mw" width="' + (72 * k) + '" height="' + (72 * k) + '" patternUnits="userSpaceOnUse">' +
-      '<rect width="' + (36 * k) + '" height="' + (72 * k) + '" fill="#ffffff" opacity="0.035"/></pattern>');
-    if (withBg) {
-      out.push('<pattern id="' + pre + 'st" width="' + (118 * k) + '" height="' + (118 * k) + '" patternUnits="userSpaceOnUse">' +
-        '<rect width="' + (118 * k) + '" height="' + (118 * k) + '" fill="#10151c"/>' +
-        '<rect width="' + (59 * k) + '" height="' + (118 * k) + '" fill="#ffffff" opacity="0.018"/></pattern>');
-    }
+    // 刈り込みの市松柄（外野芝のチェッカー模様）
+    const dd = 150 * k;
+    out.push('<pattern id="' + pre + 'mw" width="' + dd + '" height="' + dd + '" patternUnits="userSpaceOnUse">' +
+      '<rect width="' + (dd / 2) + '" height="' + (dd / 2) + '" fill="#ffffff" opacity="0.05"/>' +
+      '<rect x="' + (dd / 2) + '" y="' + (dd / 2) + '" width="' + (dd / 2) + '" height="' + (dd / 2) + '" fill="#ffffff" opacity="0.05"/></pattern>');
+    // 芝の粒状ノイズ（質感）
+    out.push('<filter id="' + pre + 'gn" x="0%" y="0%" width="100%" height="100%">' +
+      '<feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/>' +
+      '<feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.4 0.4 0.4 0 -0.55"/></filter>');
+    // 周辺減光（中央をわずかに明るく、四隅を落とす）
+    out.push('<radialGradient id="' + pre + 'vg" cx="50%" cy="42%" r="78%">' +
+      '<stop offset="0%" stop-color="#ffffff" stop-opacity="0.05"/>' +
+      '<stop offset="55%" stop-color="#000000" stop-opacity="0"/>' +
+      '<stop offset="100%" stop-color="#000000" stop-opacity="0.20"/></radialGradient>');
     out.push('</defs>');
-    if (withBg) out.push('<rect x="' + ox + '" y="' + oy + '" width="' + w + '" height="' + h + '" fill="url(#' + pre + 'st)"/>');
+    // 背景: 全面芝生（extの範囲＝共有画像では画像全体）
+    out.push('<rect x="' + bgX + '" y="' + bgY + '" width="' + bgW + '" height="' + bgH + '" fill="url(#' + pre + 'gr)"/>');
+    out.push('<rect x="' + bgX + '" y="' + bgY + '" width="' + bgW + '" height="' + bgH + '" fill="url(#' + pre + 'mw)"/>');
     // 土のダイヤ（外周を丸くふくらませた帯）
     out.push('<path d="' + rhombus(1) + '" fill="url(#' + pre + 'dt)" stroke="url(#' + pre + 'dt)" stroke-width="' + (58 * k) + '" stroke-linejoin="round"/>');
     // 内側の芝
@@ -749,6 +759,9 @@
       out.push('<rect x="' + (p[0] - 17 * k) + '" y="' + (p[1] - 17 * k) + '" width="' + (34 * k) + '" height="' + (34 * k) +
         '" transform="rotate(45 ' + p[0] + ' ' + p[1] + ')" fill="#f2ead9"/>');
     });
+    // 質感の仕上げ: 粒状ノイズと周辺減光を全体にかける
+    out.push('<rect x="' + bgX + '" y="' + bgY + '" width="' + bgW + '" height="' + bgH + '" filter="url(#' + pre + 'gn)" opacity="0.5"/>');
+    out.push('<rect x="' + bgX + '" y="' + bgY + '" width="' + bgW + '" height="' + bgH + '" fill="url(#' + pre + 'vg)"/>');
     return out.join('');
   }
 
@@ -1243,11 +1256,7 @@
     const pal = currentPalette();
     const parts = [];
 
-    // 背景（微細な縦ストライプ）
-    parts.push('<pattern id="shbg" width="' + (118 * u) + '" height="' + (118 * u) + '" patternUnits="userSpaceOnUse">' +
-      '<rect width="' + (118 * u) + '" height="' + (118 * u) + '" fill="#10151c"/>' +
-      '<rect width="' + (59 * u) + '" height="' + (118 * u) + '" fill="#ffffff" opacity="0.018"/></pattern>');
-    parts.push('<rect width="' + W + '" height="' + H + '" fill="url(#shbg)"/>');
+    // 背景はフィールド（全面芝生）が画像全体を塗るのでここでは描かない
 
     // 打順リストの行データ（パはP行を追加）
     const rows = state.order.map((k, i) => ({ num: String(i + 1), pos: POS_EN[k] || '', player: playerAt(k) }));
@@ -1290,8 +1299,8 @@
     const chipKeys = state.dh ? FIELD_KEYS.concat('DH') : FIELD_KEYS;
     for (const key of chipKeys) {
       const p = POS[key];
-      // 共有画像ではCFを少し上げ、名前札が二塁ベースにかからないようにする
-      const py = key === 'CF' ? 10 : p.y;
+      // 共有画像ではCFをさらに上げ、二塁ベースから離す
+      const py = key === 'CF' ? 8.5 : p.y;
       const cx = fx + p.x / 100 * fw;
       const cy = fy + py / 100 * fh;
       const player = playerAt(key);
@@ -1365,15 +1374,14 @@
     });
 
     // --- フッター: ロゴ＋SQUAD NINE（左）、ドメイン（右）---
-    // 縦積み＋パネル時はフッター全体がパネル上に乗るので文字を白系にする
-    const onPanelL = LIST_PANEL && !side;
+    // 背景が芝生になったのでフッター文字は常に白系
     const onPanelR = LIST_PANEL;
     const fBase = H - 16 * u;
     const fSize = 34 * u;
     parts.push(logoSvg(m, fBase - fSize * 0.82, fSize));
     parts.push('<text x="' + (m + fSize + 10 * u) + '" y="' + fBase + '" font-family="' + FONT +
       '" font-size="' + (19 * u) + '" font-weight="bold" letter-spacing="' + (3 * u) + '" fill="' +
-      (onPanelL ? 'rgba(255,255,255,0.92)' : '#8b98a5') + '">SQUAD NINE</text>');
+      'rgba(255,255,255,0.92)">SQUAD NINE</text>');
     if (SHARE_SITE) {
       parts.push('<text x="' + (W - m) + '" y="' + fBase + '" text-anchor="end" font-family="' + FONT +
         '" font-size="' + (15 * u) + '" font-weight="bold" fill="' +
