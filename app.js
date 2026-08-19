@@ -691,6 +691,23 @@
     document.addEventListener('pointercancel', onCancel);
   }
 
+  // 地面テクスチャ（空撮写真風）の調整パラメータ
+  const GROUND = {
+    GRASS_TOP: '#61a44c',            // 芝のベース色（上）
+    GRASS_BOTTOM: '#4a8a3b',         // 芝のベース色（下）
+    GRASS_VARIATION_OPACITY: 0.18,   // 広い面の色ムラの強さ
+    GRASS_GRAIN_FREQUENCY: 0.9,      // 芝の粒感の細かさ
+    GRASS_GRAIN_OPACITY: 0.4,        // 芝の粒感の強さ
+    MOWING_CONTRAST: 0.09,           // 刈り込み帯の明暗差
+    MOWING_BAND: 95,                 // 刈り込み帯の幅（1000×900基準）
+    MOWING_ANGLE: 38,                // 刈り込み帯の角度（度）
+    DIRT_TOP: '#c28449',             // 土のベース色（上）
+    DIRT_BOTTOM: '#a56d35',          // 土のベース色（下）
+    DIRT_GRAIN_OPACITY: 0.22,        // 砂の粒感の強さ
+    RAKE_MARK_OPACITY: 0.04,         // 整地跡の薄い筋の強さ
+    VIGNETTE_OPACITY: 0.16           // 周辺減光の強さ
+  };
+
   /** オーソドックスな内野（土のダイヤ＋内側の芝＋白線）を (ox,oy,w,h) に描く
    *  盤面と共有画像で共用。※球場デザイン（field.js）は凍結中 */
   function infieldSvg(ox, oy, w, h, pre, withBg, ext) {
@@ -703,44 +720,53 @@
       (Cc[0] + (p[0] - Cc[0]) * t) + ' ' + (Cc[1] + (p[1] - Cc[1]) * t)).join(' L ') + ' Z';
     const out = [];
     const bgX = ext[0], bgY = ext[1], bgW = ext[2] - ext[0], bgH = ext[3] - ext[1];
+    const G = GROUND;
     out.push('<defs>');
     out.push('<linearGradient id="' + pre + 'gr" x1="0" y1="0" x2="0" y2="1">' +
-      '<stop offset="0%" stop-color="#3f9256"/><stop offset="100%" stop-color="#2a6a3a"/></linearGradient>');
+      '<stop offset="0%" stop-color="' + G.GRASS_TOP + '"/><stop offset="100%" stop-color="' + G.GRASS_BOTTOM + '"/></linearGradient>');
     out.push('<linearGradient id="' + pre + 'dt" x1="0" y1="0" x2="0" y2="1">' +
-      '<stop offset="0%" stop-color="#b3763f"/><stop offset="100%" stop-color="#96602f"/></linearGradient>');
-    // 芝の粒状ノイズ（質感）
+      '<stop offset="0%" stop-color="' + G.DIRT_TOP + '"/><stop offset="100%" stop-color="' + G.DIRT_BOTTOM + '"/></linearGradient>');
+    // 刈り込み帯: 斜めのソフトな明暗ストライプ（線ではなく境界のぼけた面の帯）
+    const mb = G.MOWING_BAND * 2 * k;
+    out.push('<linearGradient id="' + pre + 'mwg" x1="0" y1="0" x2="1" y2="0">' +
+      '<stop offset="0%" stop-color="#ffffff" stop-opacity="' + G.MOWING_CONTRAST + '"/>' +
+      '<stop offset="42%" stop-color="#ffffff" stop-opacity="' + G.MOWING_CONTRAST + '"/>' +
+      '<stop offset="50%" stop-color="#ffffff" stop-opacity="0"/>' +
+      '<stop offset="92%" stop-color="#ffffff" stop-opacity="0"/>' +
+      '<stop offset="100%" stop-color="#ffffff" stop-opacity="' + G.MOWING_CONTRAST + '"/></linearGradient>');
+    out.push('<pattern id="' + pre + 'mw" width="' + mb + '" height="' + mb + '" patternUnits="userSpaceOnUse" patternTransform="rotate(' + G.MOWING_ANGLE + ')">' +
+      '<rect width="' + mb + '" height="' + mb + '" fill="url(#' + pre + 'mwg)"/></pattern>');
+    // 芝の粒状ノイズ（きめ）
     out.push('<filter id="' + pre + 'gn" x="0%" y="0%" width="100%" height="100%">' +
-      '<feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/>' +
+      '<feTurbulence type="fractalNoise" baseFrequency="' + G.GRASS_GRAIN_FREQUENCY + '" numOctaves="2" stitchTiles="stitch"/>' +
       '<feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.4 0.4 0.4 0 -0.55"/></filter>');
-    // 空撮風の色ムラ（低周波ノイズで芝のパッチ感を出す）
+    // 芝の広い色ムラ（散水・日照によるパッチ感）
     out.push('<filter id="' + pre + 'mo" x="0%" y="0%" width="100%" height="100%">' +
       '<feTurbulence type="fractalNoise" baseFrequency="' + (0.006 / k) + '" numOctaves="3" seed="7" stitchTiles="stitch"/>' +
       '<feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.8 0.8 0.8 0 -1.0"/></filter>');
+    // 土の質感: 砂の粒感 + 整地跡の薄い横筋（対象の形にだけ乗る）
+    out.push('<filter id="' + pre + 'dg">' +
+      '<feTurbulence type="fractalNoise" baseFrequency="' + (0.5 / k) + '" numOctaves="2" seed="3" stitchTiles="stitch" result="g"/>' +
+      '<feColorMatrix in="g" type="matrix" values="0 0 0 0 0.32  0 0 0 0 0.19  0 0 0 0 0.08  0 0 0 ' + G.DIRT_GRAIN_OPACITY + ' 0" result="grain"/>' +
+      '<feTurbulence type="fractalNoise" baseFrequency="' + (0.012 / k) + ' ' + (0.3 / k) + '" numOctaves="1" seed="9" stitchTiles="stitch" result="s"/>' +
+      '<feColorMatrix in="s" type="matrix" values="0 0 0 0 1  0 0 0 0 0.93  0 0 0 0 0.8  0 0 0 ' + G.RAKE_MARK_OPACITY + ' 0" result="rake"/>' +
+      '<feMerge result="tex"><feMergeNode in="grain"/><feMergeNode in="rake"/></feMerge>' +
+      '<feComposite in="tex" in2="SourceGraphic" operator="atop"/></filter>');
     // 周辺減光（中央をわずかに明るく、四隅を落とす）
     out.push('<radialGradient id="' + pre + 'vg" cx="50%" cy="42%" r="78%">' +
       '<stop offset="0%" stop-color="#ffffff" stop-opacity="0.05"/>' +
       '<stop offset="55%" stop-color="#000000" stop-opacity="0"/>' +
-      '<stop offset="100%" stop-color="#000000" stop-opacity="0.20"/></radialGradient>');
+      '<stop offset="100%" stop-color="#000000" stop-opacity="' + G.VIGNETTE_OPACITY + '"/></radialGradient>');
     out.push('</defs>');
-    // 背景: 全面芝生（extの範囲＝共有画像では画像全体）
+    // 背景: 全面芝生（extの範囲＝共有画像では画像全体）→ 刈り込み帯 → 色ムラ
     out.push('<rect x="' + bgX + '" y="' + bgY + '" width="' + bgW + '" height="' + bgH + '" fill="url(#' + pre + 'gr)"/>');
-    // 刈り込み: 本塁を中心にした同心円のアーク（外野をフェンス沿いの弧で刈った空撮の見え方）
-    {
-      const band = 95 * k;
-      const maxR = Math.max(
-        Math.hypot(ext[0] - B[0], ext[1] - B[1]), Math.hypot(ext[2] - B[0], ext[1] - B[1]),
-        Math.hypot(ext[0] - B[0], ext[3] - B[1]), Math.hypot(ext[2] - B[0], ext[3] - B[1]));
-      for (let r0 = band; r0 < maxR + band; r0 += band * 2) {
-        out.push('<circle cx="' + B[0] + '" cy="' + B[1] + '" r="' + (r0 + band / 2) +
-          '" fill="none" stroke="#ffffff" stroke-opacity="0.04" stroke-width="' + band + '"/>');
-      }
-    }
-    // 芝の色ムラ
-    out.push('<rect x="' + bgX + '" y="' + bgY + '" width="' + bgW + '" height="' + bgH + '" filter="url(#' + pre + 'mo)" opacity="0.35"/>');
-    // 土のダイヤ（外周を丸くふくらませた帯）
-    out.push('<path d="' + rhombus(1) + '" fill="url(#' + pre + 'dt)" stroke="url(#' + pre + 'dt)" stroke-width="' + (58 * k) + '" stroke-linejoin="round"/>');
-    // 内側の芝
+    out.push('<rect x="' + bgX + '" y="' + bgY + '" width="' + bgW + '" height="' + bgH + '" fill="url(#' + pre + 'mw)"/>');
+    out.push('<rect x="' + bgX + '" y="' + bgY + '" width="' + bgW + '" height="' + bgH + '" filter="url(#' + pre + 'mo)" opacity="' + G.GRASS_VARIATION_OPACITY + '"/>');
+    // 土のダイヤ（外周を丸くふくらませた帯・砂の質感つき）
+    out.push('<path d="' + rhombus(1) + '" fill="url(#' + pre + 'dt)" stroke="url(#' + pre + 'dt)" stroke-width="' + (58 * k) + '" stroke-linejoin="round" filter="url(#' + pre + 'dg)"/>');
+    // 内側の芝（刈り込み帯も外と連続させる）
     out.push('<path d="' + rhombus(0.72) + '" fill="url(#' + pre + 'gr)"/>');
+    out.push('<path d="' + rhombus(0.72) + '" fill="url(#' + pre + 'mw)"/>');
     // ベースライン（白）
     out.push('<path d="' + rhombus(1) + '" fill="none" stroke="#f2ead9" stroke-width="' + (6 * k) + '" opacity="0.85"/>');
     // ファウルライン: 本塁→一塁/三塁の延長線を ext の端まで伸ばす
@@ -758,10 +784,10 @@
         '" stroke="#f2ead9" stroke-width="' + (6 * k) + '" opacity="0.85"/>');
     });
     // マウンド
-    out.push('<circle cx="' + Cc[0] + '" cy="' + Cc[1] + '" r="' + (54 * k) + '" fill="#8a5a34"/>');
+    out.push('<circle cx="' + Cc[0] + '" cy="' + Cc[1] + '" r="' + (54 * k) + '" fill="url(#' + pre + 'dt)" filter="url(#' + pre + 'dg)"/>');
     out.push('<rect x="' + (Cc[0] - 12 * k) + '" y="' + (Cc[1] - 4 * k) + '" width="' + (24 * k) + '" height="' + (8 * k) + '" fill="#f2ead9"/>');
     // 本塁まわりの土と本塁
-    out.push('<circle cx="' + B[0] + '" cy="' + B[1] + '" r="' + (62 * k) + '" fill="url(#' + pre + 'dt)"/>');
+    out.push('<circle cx="' + B[0] + '" cy="' + B[1] + '" r="' + (62 * k) + '" fill="url(#' + pre + 'dt)" filter="url(#' + pre + 'dg)"/>');
     out.push('<path d="M ' + (B[0] - 16 * k) + ' ' + (B[1] - 12 * k) + ' h' + (32 * k) + ' v' + (14 * k) +
       ' l-' + (16 * k) + ' ' + (14 * k) + ' l-' + (16 * k) + ' -' + (14 * k) + ' z" fill="#f2ead9"/>');
     // 塁ベース（白）
@@ -770,7 +796,7 @@
         '" transform="rotate(45 ' + p[0] + ' ' + p[1] + ')" fill="#f2ead9"/>');
     });
     // 質感の仕上げ: 粒状ノイズと周辺減光を全体にかける
-    out.push('<rect x="' + bgX + '" y="' + bgY + '" width="' + bgW + '" height="' + bgH + '" filter="url(#' + pre + 'gn)" opacity="0.5"/>');
+    out.push('<rect x="' + bgX + '" y="' + bgY + '" width="' + bgW + '" height="' + bgH + '" filter="url(#' + pre + 'gn)" opacity="' + G.GRASS_GRAIN_OPACITY + '"/>');
     out.push('<rect x="' + bgX + '" y="' + bgY + '" width="' + bgW + '" height="' + bgH + '" fill="url(#' + pre + 'vg)"/>');
     return out.join('');
   }
