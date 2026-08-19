@@ -708,15 +708,14 @@
       '<stop offset="0%" stop-color="#3f9256"/><stop offset="100%" stop-color="#2a6a3a"/></linearGradient>');
     out.push('<linearGradient id="' + pre + 'dt" x1="0" y1="0" x2="0" y2="1">' +
       '<stop offset="0%" stop-color="#b3763f"/><stop offset="100%" stop-color="#96602f"/></linearGradient>');
-    // 刈り込みの市松柄（外野芝のチェッカー模様）
-    const dd = 150 * k;
-    out.push('<pattern id="' + pre + 'mw" width="' + dd + '" height="' + dd + '" patternUnits="userSpaceOnUse">' +
-      '<rect width="' + (dd / 2) + '" height="' + (dd / 2) + '" fill="#ffffff" opacity="0.05"/>' +
-      '<rect x="' + (dd / 2) + '" y="' + (dd / 2) + '" width="' + (dd / 2) + '" height="' + (dd / 2) + '" fill="#ffffff" opacity="0.05"/></pattern>');
     // 芝の粒状ノイズ（質感）
     out.push('<filter id="' + pre + 'gn" x="0%" y="0%" width="100%" height="100%">' +
       '<feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/>' +
       '<feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.4 0.4 0.4 0 -0.55"/></filter>');
+    // 空撮風の色ムラ（低周波ノイズで芝のパッチ感を出す）
+    out.push('<filter id="' + pre + 'mo" x="0%" y="0%" width="100%" height="100%">' +
+      '<feTurbulence type="fractalNoise" baseFrequency="' + (0.006 / k) + '" numOctaves="3" seed="7" stitchTiles="stitch"/>' +
+      '<feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.8 0.8 0.8 0 -1.0"/></filter>');
     // 周辺減光（中央をわずかに明るく、四隅を落とす）
     out.push('<radialGradient id="' + pre + 'vg" cx="50%" cy="42%" r="78%">' +
       '<stop offset="0%" stop-color="#ffffff" stop-opacity="0.05"/>' +
@@ -725,12 +724,23 @@
     out.push('</defs>');
     // 背景: 全面芝生（extの範囲＝共有画像では画像全体）
     out.push('<rect x="' + bgX + '" y="' + bgY + '" width="' + bgW + '" height="' + bgH + '" fill="url(#' + pre + 'gr)"/>');
-    out.push('<rect x="' + bgX + '" y="' + bgY + '" width="' + bgW + '" height="' + bgH + '" fill="url(#' + pre + 'mw)"/>');
+    // 刈り込み: 本塁を中心にした同心円のアーク（外野をフェンス沿いの弧で刈った空撮の見え方）
+    {
+      const band = 95 * k;
+      const maxR = Math.max(
+        Math.hypot(ext[0] - B[0], ext[1] - B[1]), Math.hypot(ext[2] - B[0], ext[1] - B[1]),
+        Math.hypot(ext[0] - B[0], ext[3] - B[1]), Math.hypot(ext[2] - B[0], ext[3] - B[1]));
+      for (let r0 = band; r0 < maxR + band; r0 += band * 2) {
+        out.push('<circle cx="' + B[0] + '" cy="' + B[1] + '" r="' + (r0 + band / 2) +
+          '" fill="none" stroke="#ffffff" stroke-opacity="0.04" stroke-width="' + band + '"/>');
+      }
+    }
+    // 芝の色ムラ
+    out.push('<rect x="' + bgX + '" y="' + bgY + '" width="' + bgW + '" height="' + bgH + '" filter="url(#' + pre + 'mo)" opacity="0.35"/>');
     // 土のダイヤ（外周を丸くふくらませた帯）
     out.push('<path d="' + rhombus(1) + '" fill="url(#' + pre + 'dt)" stroke="url(#' + pre + 'dt)" stroke-width="' + (58 * k) + '" stroke-linejoin="round"/>');
     // 内側の芝
     out.push('<path d="' + rhombus(0.72) + '" fill="url(#' + pre + 'gr)"/>');
-    out.push('<path d="' + rhombus(0.72) + '" fill="url(#' + pre + 'mw)"/>');
     // ベースライン（白）
     out.push('<path d="' + rhombus(1) + '" fill="none" stroke="#f2ead9" stroke-width="' + (6 * k) + '" opacity="0.85"/>');
     // ファウルライン: 本塁→一塁/三塁の延長線を ext の端まで伸ばす
