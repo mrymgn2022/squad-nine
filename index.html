@@ -18,7 +18,7 @@
 <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="icons/icon-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="stylesheet" href="styles.css?v=42">
+<link rel="stylesheet" href="styles.css?v=43">
 </head>
 <body>
 
@@ -74,6 +74,7 @@
   <section class="order-pane">
     <div class="pane-head">
       <h2>打順</h2>
+      <button id="btnStats" class="stats-btn" type="button" aria-pressed="false" title="背番号・投打の行をシーズン成績に切り替え">成績を表示</button>
     </div>
     <table class="order-table">
       <thead>
@@ -222,9 +223,10 @@
 
 <div class="toast" id="toast" hidden></div>
 
-<script src="data/npb-players.js?v=42"></script>
-<script src="data/presets.js?v=42"></script>
-<script src="field.js?v=42"></script>
-<script src="app.js?v=42"></script>
+<script src="data/npb-players.js?v=43"></script>
+<script src="data/npb-stats.js?v=43"></script>
+<script src="data/presets.js?v=43"></script>
+<script src="field.js?v=43"></script>
+<script src="app.js?v=43"></script>
 </body>
 </html>

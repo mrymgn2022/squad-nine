@@ -214,6 +214,13 @@ button, input, select { font-family: inherit; }
 .pane-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .pane-head h2 { margin: 0; font-size: 15px; letter-spacing: .1em; }
 .pane-head-actions { display: flex; gap: 6px; }
+/* 成績表示の切り替え（ONで塗りつぶし） */
+.stats-btn {
+  background: transparent; border: 1px solid var(--line); color: var(--fg-dim);
+  border-radius: 999px; padding: 6px 13px; font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.stats-btn:hover { color: var(--fg); border-color: #3b4855; }
+.stats-btn.is-on { background: var(--accent); border-color: var(--accent); color: #16100b; }
 .ghost-btn {
   background: transparent; border: 1px solid var(--line); color: var(--fg-dim);
   border-radius: 8px; padding: 6px 10px; font-size: 12px; cursor: pointer;
@@ -272,6 +279,12 @@ body.dragging-order { user-select: none; -webkit-user-select: none; cursor: grab
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .ord-sub .ord-team-s { display: none; }
+/* 成績表示: 極小画面ではOPSを省いた短縮版に切り替え */
+.ord-sub .st-compact { display: none; }
+@media (max-width: 374px) {
+  .ord-sub .st-full { display: none; }
+  .ord-sub .st-compact { display: inline; }
+}
 /* フル球団名が入りきらない行はJS(fitTeamNames)がis-abbrを付けて新聞略記に切り替える */
 .ord-sub.is-abbr .ord-team { display: none; }
 .ord-sub.is-abbr .ord-team-s { display: inline; }

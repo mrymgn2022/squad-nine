@@ -170,6 +170,7 @@
   const state = {
     title: '',
     dh: true,
+    showStats: false,        // 打順表のサブ行をシーズン成績にする
     myTeam: TEAMS.length ? TEAMS[0].id : '',
     fieldStyle: 'koshien',   // 球場デザイン (field.js)
     assign: {},              // posKey -> playerId
@@ -189,6 +190,7 @@
         if (s && typeof s === 'object') {
           if (typeof s.title === 'string') state.title = s.title;
           if (typeof s.dh === 'boolean') state.dh = s.dh;
+          if (typeof s.showStats === 'boolean') state.showStats = s.showStats;
           if (typeof s.myTeam === 'string' && TEAMS.some(t => t.id === s.myTeam)) state.myTeam = s.myTeam;
           if (typeof s.fieldStyle === 'string' && FIELD_STYLES.some(f => f.id === s.fieldStyle)) state.fieldStyle = s.fieldStyle;
           if (s.assign && typeof s.assign === 'object') {
@@ -509,7 +511,18 @@
       pn.textContent = player ? displayName(player) : '（未設定）';
       const sub = document.createElement('div');
       sub.className = 'ord-sub';
-      if (player) {
+      if (player && state.showStats) {
+        // 成績表示モード: 打者は打撃成績、投手は投手成績。極小画面はOPS省略版（CSSで切替）
+        sub.classList.add('is-stats');
+        const full = document.createElement('span');
+        full.className = 'st-full';
+        full.textContent = statsLine(player, key, false);
+        const compact = document.createElement('span');
+        compact.className = 'st-compact';
+        compact.textContent = statsLine(player, key, true);
+        sub.appendChild(full);
+        sub.appendChild(compact);
+      } else if (player) {
         // 球団名: PCはフル表記、狭い画面では新聞略記（CSSで切替）
         sub.appendChild(document.createTextNode('#' + player.number + ' '));
         const team = document.createElement('span');
@@ -568,6 +581,22 @@
       tr.appendChild(tdNo); tr.appendChild(tdPos); tr.appendChild(tdName); tr.appendChild(tdAct);
     if (movable) attachRowDrag(tr, idx);
     return tr;
+  }
+
+  /** サブ行に出すシーズン成績の文字列。投手枠は投手成績、それ以外は打撃成績。
+      compact=true は極小画面向けの短縮表記 */
+  function statsLine(player, posKey, compact) {
+    const s = window.NPB_STATS && window.NPB_STATS.players && window.NPB_STATS.players[player.id];
+    if (!s) return '成績データなし';
+    if (posKey === 'P') {
+      if (s.era === undefined) return '登板なし';
+      const rec = s.w + '勝' + s.l + '敗' + (s.sv > 0 ? s.sv + 'S' : '');
+      return (compact ? '防' : '防御率') + s.era + '・' + rec;
+    }
+    if (s.avg === undefined) return '打席なし';
+    return compact
+      ? s.avg + '・' + s.hr + '本・' + s.rbi + '点'
+      : s.avg + '・' + s.hr + '本・' + s.rbi + '点・OPS' + s.ops;
   }
 
   function moveOrder(from, to) {
@@ -1582,6 +1611,20 @@
 
   $('#btnReset').addEventListener('click', resetBoard);
 
+  // 成績表示の切り替え（打順表のサブ行を 背番号・投打 ⇄ シーズン成績）
+  function syncStatsBtn() {
+    const b = $('#btnStats');
+    b.classList.toggle('is-on', state.showStats);
+    b.setAttribute('aria-pressed', state.showStats ? 'true' : 'false');
+    b.textContent = state.showStats ? '成績を表示中' : '成績を表示';
+  }
+  $('#btnStats').addEventListener('click', () => {
+    state.showStats = !state.showStats;
+    syncStatsBtn();
+    saveLineup();
+    renderOrder();
+  });
+
   // ------------------------------------------------------------
   // 初回訪問: 応援球団を選んでもらい、その球団のスタメンを出す
   // ------------------------------------------------------------
@@ -1728,6 +1771,7 @@
     fs.innerHTML = FIELD_STYLES.map(f => '<option value="' + f.id + '">' + f.label + '</option>').join('');
     fs.value = state.fieldStyle;
     updateDhSeg();
+    syncStatsBtn();
     renderFieldArt();
     renderAll();
 
