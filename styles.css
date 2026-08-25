@@ -73,12 +73,14 @@ button, input, select { font-family: inherit; }
   border-radius: 9px; padding: 9px 10px; font-size: 13px;
 }
 .auto-group { display: flex; gap: 6px; align-items: center; }
+/* B案: ゴールド塗りつぶし（オレンジ=共有、ゴールド=自動配置で役割を色分け） */
 .auto-btn {
   display: inline-flex; align-items: center; gap: 5px;
-  color: #ffd18f; border-color: #6b4d2a; background: #241a10;
+  color: #241a10; border-color: #ffb02e; background: #ffb02e;
+  font-weight: 800;
 }
-.auto-btn:hover { background: #33261a; border-color: #8a6538; }
-.auto-btn svg { width: 13px; height: 13px; fill: #ffc44d; }
+.auto-btn:hover { background: #ffc14f; border-color: #ffc14f; }
+.auto-btn svg { width: 13px; height: 13px; fill: #241a10; }
 
 /* ---------- layout ---------- */
 .layout {
