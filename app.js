@@ -1642,7 +1642,7 @@
     const short = team ? team.short : '';
     const pre = window.NPB_PRESETS && window.NPB_PRESETS.teams && window.NPB_PRESETS.teams[teamId];
     if (!pre || !pre.assign) {
-      toast(short + 'のおまかせ配置は準備中です');
+      toast(short + 'の自動配置は準備中です');
       return;
     }
     if (Object.keys(state.assign).length &&
