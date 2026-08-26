@@ -1279,15 +1279,17 @@
   // ============================================================
   // 共有画像 (SVG → PNG)
   // ============================================================
-  // 主戦場はXなので16:9を先頭（デフォルト）にする
+  // 出力はX向け16:9の一本（主戦場はX。16:9は他媒体でも崩れない両取りサイズ）
+  // 他サイズは2026-08-26に凍結。復活はこの配列に追加し直すだけ:
+  //   { id: 'ig', label: 'Instagram', note: '4:5', w: 1080, h: 1350 },
+  //   { id: 'sq', label: '正方形', note: '1:1', w: 1080, h: 1080 },
+  //   { id: 'story', label: 'ストーリーズ', note: '9:16', w: 1080, h: 1920 }
   const SHARE_PRESETS = [
-    { id: 'x',     label: 'X (Twitter)', note: '16:9',  w: 1600, h: 900 },
-    { id: 'ig',    label: 'Instagram',   note: '4:5',   w: 1080, h: 1350 },
-    { id: 'sq',    label: '正方形',       note: '1:1',   w: 1080, h: 1080 },
-    { id: 'story', label: 'ストーリーズ', note: '9:16',  w: 1080, h: 1920 }
+    { id: 'x', label: 'X (Twitter)', note: '16:9', w: 1920, h: 1080 }
   ];
   const FONT = "'Yu Gothic','Hiragino Kaku Gothic ProN','Noto Sans JP','Meiryo',sans-serif";
   let sharePreset = SHARE_PRESETS[0];
+  let shareMode = 'field';   // 'field' | 'stats'
 
   function esc(s) {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -1460,31 +1462,133 @@
   let shareBlob = null;
 
   function renderShareSizes() {
+    // 旧サイズ選択の場所を「フィールド版 / 成績版」の切り替えタブに転用
     const box = $('#shareSizes');
     box.innerHTML = '';
-    for (const preset of SHARE_PRESETS) {
+    [['field', 'フィールド版'], ['stats', '成績版']].forEach(pair => {
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'size-btn' + (preset.id === sharePreset.id ? ' is-on' : '');
-      b.innerHTML = '<b>' + preset.label + '</b><small>' + preset.note + '</small>';
+      b.className = 'size-btn mode-btn' + (shareMode === pair[0] ? ' is-on' : '');
+      b.innerHTML = '<b>' + pair[1] + '</b>';
       b.addEventListener('click', () => {
-        sharePreset = preset;
+        shareMode = pair[0];
         renderShareSizes();
         renderSharePreview();
       });
       box.appendChild(b);
-    }
+    });
   }
 
+  // ============================================================
+  // 成績版の共有画像（TVスタメンスーパー型・A案）
+  // ============================================================
+  const TEAM_FULL = {
+    g: '読売ジャイアンツ', t: '阪神タイガース', db: '横浜DeNAベイスターズ', c: '広島東洋カープ',
+    s: '東京ヤクルトスワローズ', d: '中日ドラゴンズ', h: '福岡ソフトバンクホークス', f: '北海道日本ハムファイターズ',
+    m: '千葉ロッテマリーンズ', e: '東北楽天ゴールデンイーグルス', b: 'オリックス・バファローズ', l: '埼玉西武ライオンズ'
+  };
+
+  function statOf(player) {
+    return (player && window.NPB_STATS && window.NPB_STATS.players && window.NPB_STATS.players[player.id]) || null;
+  }
+
+  function buildStatsShareSVG(W, H) {
+    const k = W / 1600;
+    const pal = currentPalette();
+    // 暗色ベースの画面なので、アクセントと帯上の文字色は明度で選ぶ
+    const accent = hexLum(pal.circ) < 0.25 ? '#ff6b2c' : pal.circ;
+    const barLight = hexLum(pal.bar) >= 0.4;          // 帯が明るい色（ブランドオレンジ等）か
+    const statFill = barLight ? '#16100b' : '#ffffff';
+    const subFill = barLight ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.55)';
+    const nameFill = hexLum(pal.fg) < 0.2 && !barLight ? '#ffffff' : pal.fg;
+    const p = [];
+    // 背景（ダーク縦ストライプ）
+    p.push('<pattern id="stbg" width="' + (118 * k) + '" height="' + (118 * k) + '" patternUnits="userSpaceOnUse">' +
+      '<rect width="' + (118 * k) + '" height="' + (118 * k) + '" fill="#10151c"/>' +
+      '<rect width="' + (59 * k) + '" height="' + (118 * k) + '" fill="#ffffff" opacity="0.018"/></pattern>');
+    p.push('<rect width="' + W + '" height="' + H + '" fill="url(#stbg)"/>');
+
+    // ヘッダー: チーム名（単一球団ならフル名称）と日付
+    const assigned = Object.values(state.assign).map(id => BY_ID.get(String(id))).filter(Boolean);
+    const teamIds = new Set(assigned.map(pl => pl.teamId));
+    const title = teamIds.size === 1 ? (TEAM_FULL[assigned[0].teamId] || assigned[0].teamShort) : 'マイスタメン';
+    const now = new Date();
+    const dateStr = now.getFullYear() + '.' + String(now.getMonth() + 1).padStart(2, '0') + '.' + String(now.getDate()).padStart(2, '0');
+    const m = 60 * k;
+    p.push('<text x="' + m + '" y="' + (70 * k) + '" font-family="' + FONT + '" font-size="' + (18 * k) + '" font-weight="bold" letter-spacing="' + (6 * k) + '" fill="' + accent + '">STARTING LINEUP</text>');
+    p.push('<text x="' + m + '" y="' + (114 * k) + '" font-family="' + FONT + '" font-size="' + (34 * k) + '" font-weight="900" fill="#ffffff">' + esc(title) + '</text>');
+    p.push('<text x="' + (W - m) + '" y="' + (114 * k) + '" text-anchor="end" font-family="' + FONT + '" font-size="' + (17 * k) + '" font-weight="bold" fill="#8b98a5">' + dateStr + '</text>');
+    p.push('<rect x="' + m + '" y="' + (130 * k) + '" width="' + (W - m * 2) + '" height="' + (4 * k) + '" fill="' + accent + '"/>');
+
+    // 行データ（DHありは打順9人+投手行）
+    const rows = state.order.map((key, i) => ({ no: String(i + 1), key: key, player: playerAt(key) }));
+    if (state.dh) rows.push({ no: 'P', key: 'P', player: playerAt('P') });
+    const n = rows.length;
+    const cAvg = 1120 * k, cHr = 1260 * k, cRbi = 1390 * k, cOps = 1530 * k;
+    const rh = (n === 10 ? 56 : 62) * k, gap = 6 * k, top = 178 * k;
+    [['打率', cAvg], ['本塁打', cHr], ['打点', cRbi], ['OPS', cOps]].forEach(c =>
+      p.push('<text x="' + c[1] + '" y="' + (top - 12 * k) + '" text-anchor="end" font-family="' + FONT + '" font-size="' + (15 * k) + '" font-weight="bold" fill="#8b98a5">' + c[0] + '</text>'));
+
+    rows.forEach((r, i) => {
+      const y = top + i * (rh + gap), cy = y + rh / 2;
+      const s = statOf(r.player);
+      p.push('<rect x="' + m + '" y="' + y + '" width="' + (W - m * 2) + '" height="' + rh + '" rx="' + (9 * k) + '" fill="' + pal.bar + '"/>');
+      p.push('<rect x="' + m + '" y="' + y + '" width="' + (W - m * 2) + '" height="' + rh + '" rx="' + (9 * k) + '" fill="none" stroke="rgba(255,255,255,0.10)"/>');
+      // 打順の丸
+      p.push('<circle cx="' + (m + 36 * k) + '" cy="' + cy + '" r="' + (19 * k) + '" fill="' + pal.circ + '"/>');
+      p.push('<text x="' + (m + 36 * k) + '" y="' + (cy + 7 * k) + '" text-anchor="middle" font-family="' + FONT + '" font-size="' + (20 * k) + '" font-weight="900" fill="' + pal.circFg + '">' + r.no + '</text>');
+      // 写真
+      const ar = rh / 2 - 6 * k;
+      p.push(shareAvatar(m + 88 * k, cy, ar, r.player, 'stav' + i));
+      p.push('<circle cx="' + (m + 88 * k) + '" cy="' + cy + '" r="' + ar + '" fill="none" stroke="' + accent + '" stroke-width="' + (2.5 * k) + '"/>');
+      // 守備バッジ・背番号・名前
+      p.push('<rect x="' + (m + 122 * k) + '" y="' + (cy - 14 * k) + '" width="' + (42 * k) + '" height="' + (28 * k) + '" rx="' + (6 * k) + '" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.25)"/>');
+      p.push('<text x="' + (m + 143 * k) + '" y="' + (cy + 6 * k) + '" text-anchor="middle" font-family="' + FONT + '" font-size="' + (15 * k) + '" font-weight="bold" fill="' + statFill + '">' + (POS_EN[r.key] || '') + '</text>');
+      if (r.player) {
+        p.push('<text x="' + (m + 180 * k) + '" y="' + (cy + 5.5 * k) + '" font-family="' + FONT + '" font-size="' + (14 * k) + '" font-weight="bold" fill="' + subFill + '">#' + esc(r.player.number) + '</text>');
+      }
+      p.push('<text x="' + (m + 234 * k) + '" y="' + (cy + 8.5 * k) + '" font-family="' + FONT + '" font-size="' + (25 * k) + '" font-weight="900" fill="' + nameFill + '"' +
+        (r.player ? '' : ' opacity="0.5"') + '>' + esc(r.player ? displayName(r.player) : '未設定') + '</text>');
+      // 投手成績は名前の横の空きスペースへ
+      if (r.key === 'P' && s && s.era !== undefined) {
+        const rec = s.w + '勝' + s.l + '敗' + (s.sv > 0 ? s.sv + 'S' : '');
+        p.push('<text x="' + (m + 470 * k) + '" y="' + (cy + 6.5 * k) + '" font-family="' + FONT + '" font-size="' + (18 * k) + '" font-weight="bold" fill="' + (barLight ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.75)') + '">防御率 ' + s.era + '・' + rec + '</text>');
+      }
+      // 打撃成績（DHありの投手は打席に立たないので—。打席がない選手も—）
+      const dash = (state.dh && r.no === 'P') || !s || s.avg === undefined;
+      const vals = dash ? ['—', '—', '—', '—'] : [s.avg, String(s.hr), String(s.rbi), s.ops];
+      [[vals[0], cAvg], [vals[1], cHr], [vals[2], cRbi], [vals[3], cOps]].forEach(c =>
+        p.push('<text x="' + c[1] + '" y="' + (cy + 8 * k) + '" text-anchor="end" font-family="' + FONT + '" font-size="' + (23 * k) + '" font-weight="900" fill="' + statFill + '"' +
+          (dash ? ' opacity="0.35"' : '') + '>' + c[0] + '</text>'));
+    });
+
+    // フッター
+    const fBase = H - 22 * k;
+    p.push(logoSvg(m, fBase - 27 * k, 32 * k));
+    p.push('<text x="' + (m + 42 * k) + '" y="' + fBase + '" font-family="' + FONT + '" font-size="' + (18 * k) + '" font-weight="bold" letter-spacing="' + (3 * k) + '" fill="#8b98a5">SQUAD NINE</text>');
+    if (window.NPB_STATS && window.NPB_STATS.updated) {
+      p.push('<text x="' + (W / 2) + '" y="' + fBase + '" text-anchor="middle" font-family="' + FONT + '" font-size="' + (13 * k) + '" fill="#5d6a77">成績は ' + window.NPB_STATS.updated + ' 時点</text>');
+    }
+    if (SHARE_SITE) {
+      p.push('<text x="' + (W - m) + '" y="' + fBase + '" text-anchor="end" font-family="' + FONT + '" font-size="' + (15 * k) + '" font-weight="bold" fill="#ff6b2c">' + esc(SHARE_SITE) + '</text>');
+    }
+    return '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + W +
+      '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">' + p.join('') + '</svg>';
+  }
+
+  let shareRenderSeq = 0;   // タブ切替の連打で古いレンダリングが新しい方を上書きしないように
+
   function renderSharePreview() {
+    const seq = ++shareRenderSeq;
     const W = sharePreset.w, H = sharePreset.h;
     $('#shareDim').textContent = W + ' × ' + H + ' px';
     $('#sharePreview').innerHTML = '<div class="hint">生成中…</div>';
     shareBlob = null;
 
-    const svg = buildShareSVG(W, H);
+    const svg = shareMode === 'stats' ? buildStatsShareSVG(W, H) : buildShareSVG(W, H);
     const im = new Image();
     im.onload = () => {
+      if (seq !== shareRenderSeq) return;
       const cv = document.createElement('canvas');
       cv.width = W; cv.height = H;
       const ctx = cv.getContext('2d');
@@ -1492,6 +1596,7 @@
       ctx.fillRect(0, 0, W, H);
       ctx.drawImage(im, 0, 0);
       cv.toBlob(blob => {
+        if (seq !== shareRenderSeq) return;
         shareBlob = blob;
         const out = URL.createObjectURL(blob);
         $('#sharePreview').innerHTML = '<img alt="スタメン画像" src="' + out + '">';
@@ -1501,6 +1606,7 @@
       }, 'image/png');
     };
     im.onerror = () => {
+      if (seq !== shareRenderSeq) return;
       $('#sharePreview').innerHTML = '<div class="hint">画像の生成に失敗しました</div>';
     };
     im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);

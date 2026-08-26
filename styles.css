@@ -465,6 +465,10 @@ label.pbtn { display: inline-block; }
 .size-btn b { display: block; font-size: 12px; color: inherit; }
 .size-btn small { display: block; font-size: 10px; opacity: .7; }
 .size-btn.is-on { background: var(--accent); border-color: var(--accent); color: #16100b; font-weight: 700; }
+/* フィールド版/成績版の切り替えタブ（旧サイズ選択の場所） */
+.size-btn.mode-btn { flex: 1; padding: 10px 12px; }
+.size-btn.mode-btn b { font-size: 13px; }
+.app-btn[hidden] { display: none; }
 .share-body { padding: 16px; overflow: auto; display: grid; place-items: center; min-height: 200px; }
 .share-preview img {
   max-width: 100%; max-height: 46vh; width: auto; height: auto;
