@@ -1508,69 +1508,94 @@
       '<rect width="' + (59 * k) + '" height="' + (118 * k) + '" fill="#ffffff" opacity="0.018"/></pattern>');
     p.push('<rect width="' + W + '" height="' + H + '" fill="url(#stbg)"/>');
 
-    // ヘッダー: チーム名（単一球団ならフル名称）と日付
+    // ヘッダー: チーム名（単一球団ならフル名称）と日付。上下の余白は詰めて行を大きく使う
     const assigned = Object.values(state.assign).map(id => BY_ID.get(String(id))).filter(Boolean);
     const teamIds = new Set(assigned.map(pl => pl.teamId));
     const title = teamIds.size === 1 ? (TEAM_FULL[assigned[0].teamId] || assigned[0].teamShort) : 'マイスタメン';
     const now = new Date();
     const dateStr = now.getFullYear() + '.' + String(now.getMonth() + 1).padStart(2, '0') + '.' + String(now.getDate()).padStart(2, '0');
     const m = 60 * k;
-    p.push('<text x="' + m + '" y="' + (70 * k) + '" font-family="' + FONT + '" font-size="' + (18 * k) + '" font-weight="bold" letter-spacing="' + (6 * k) + '" fill="' + accent + '">STARTING LINEUP</text>');
-    p.push('<text x="' + m + '" y="' + (114 * k) + '" font-family="' + FONT + '" font-size="' + (34 * k) + '" font-weight="900" fill="#ffffff">' + esc(title) + '</text>');
-    p.push('<text x="' + (W - m) + '" y="' + (114 * k) + '" text-anchor="end" font-family="' + FONT + '" font-size="' + (17 * k) + '" font-weight="bold" fill="#8b98a5">' + dateStr + '</text>');
-    p.push('<rect x="' + m + '" y="' + (130 * k) + '" width="' + (W - m * 2) + '" height="' + (4 * k) + '" fill="' + accent + '"/>');
+    const rowR = 1572 * k;   // 行の帯は右端近くまで延長（OPSの右に余白を作る）
+    p.push('<text x="' + m + '" y="' + (46 * k) + '" font-family="' + FONT + '" font-size="' + (14 * k) + '" font-weight="bold" letter-spacing="' + (5 * k) + '" fill="' + accent + '">STARTING LINEUP</text>');
+    p.push('<text x="' + m + '" y="' + (84 * k) + '" font-family="' + FONT + '" font-size="' + (32 * k) + '" font-weight="900" fill="#ffffff">' + esc(title) + '</text>');
+    p.push('<text x="' + rowR + '" y="' + (84 * k) + '" text-anchor="end" font-family="' + FONT + '" font-size="' + (16 * k) + '" font-weight="bold" fill="#8b98a5">' + dateStr + '</text>');
+    p.push('<rect x="' + m + '" y="' + (98 * k) + '" width="' + (rowR - m) + '" height="' + (3 * k) + '" fill="' + accent + '"/>');
 
     // 行データ（DHありは打順9人+投手行）
     const rows = state.order.map((key, i) => ({ no: String(i + 1), key: key, player: playerAt(key) }));
     if (state.dh) rows.push({ no: 'P', key: 'P', player: playerAt('P') });
     const n = rows.length;
-    const cAvg = 1120 * k, cHr = 1260 * k, cRbi = 1390 * k, cOps = 1530 * k;
-    const rh = (n === 10 ? 56 : 62) * k, gap = 6 * k, top = 178 * k;
+    const cAvg = 1140 * k, cHr = 1280 * k, cRbi = 1400 * k, cOps = 1532 * k;
+    const rh = (n === 10 ? 68 : 75) * k, gap = (n === 10 ? 3 : 4) * k, top = 142 * k;
+    const badgeRight = 1050 * k;   // バッジ・投手成績の右端（打率列の手前）
     [['打率', cAvg], ['本塁打', cHr], ['打点', cRbi], ['OPS', cOps]].forEach(c =>
-      p.push('<text x="' + c[1] + '" y="' + (top - 12 * k) + '" text-anchor="end" font-family="' + FONT + '" font-size="' + (15 * k) + '" font-weight="bold" fill="#8b98a5">' + c[0] + '</text>'));
+      p.push('<text x="' + c[1] + '" y="' + (top - 10 * k) + '" text-anchor="end" font-family="' + FONT + '" font-size="' + (14 * k) + '" font-weight="bold" fill="#8b98a5">' + c[0] + '</text>'));
+
+    // 打線内の各部門トップ（投手枠と成績なしは対象外）にバッジを付ける
+    const contenders = rows.filter(r => r.key !== 'P' && statOf(r.player) && statOf(r.player).avg !== undefined);
+    const bestOf = f => contenders.length ? contenders.reduce((a, b) => f(statOf(b.player)) > f(statOf(a.player)) ? b : a).key : null;
+    const best = {
+      avg: bestOf(s2 => parseFloat(s2.avg)),
+      hr:  bestOf(s2 => s2.hr),
+      rbi: bestOf(s2 => s2.rbi),
+      ops: bestOf(s2 => parseFloat(s2.ops))
+    };
 
     rows.forEach((r, i) => {
       const y = top + i * (rh + gap), cy = y + rh / 2;
       const s = statOf(r.player);
-      p.push('<rect x="' + m + '" y="' + y + '" width="' + (W - m * 2) + '" height="' + rh + '" rx="' + (9 * k) + '" fill="' + pal.bar + '"/>');
-      p.push('<rect x="' + m + '" y="' + y + '" width="' + (W - m * 2) + '" height="' + rh + '" rx="' + (9 * k) + '" fill="none" stroke="rgba(255,255,255,0.10)"/>');
+      p.push('<rect x="' + m + '" y="' + y + '" width="' + (rowR - m) + '" height="' + rh + '" rx="' + (10 * k) + '" fill="' + pal.bar + '"/>');
+      p.push('<rect x="' + m + '" y="' + y + '" width="' + (rowR - m) + '" height="' + rh + '" rx="' + (10 * k) + '" fill="none" stroke="rgba(255,255,255,0.10)"/>');
       // 打順の丸
-      p.push('<circle cx="' + (m + 36 * k) + '" cy="' + cy + '" r="' + (19 * k) + '" fill="' + pal.circ + '"/>');
-      p.push('<text x="' + (m + 36 * k) + '" y="' + (cy + 7 * k) + '" text-anchor="middle" font-family="' + FONT + '" font-size="' + (20 * k) + '" font-weight="900" fill="' + pal.circFg + '">' + r.no + '</text>');
-      // 写真
-      const ar = rh / 2 - 6 * k;
-      p.push(shareAvatar(m + 88 * k, cy, ar, r.player, 'stav' + i));
-      p.push('<circle cx="' + (m + 88 * k) + '" cy="' + cy + '" r="' + ar + '" fill="none" stroke="' + accent + '" stroke-width="' + (2.5 * k) + '"/>');
+      p.push('<circle cx="' + (m + 40 * k) + '" cy="' + cy + '" r="' + (22 * k) + '" fill="' + pal.circ + '"/>');
+      p.push('<text x="' + (m + 40 * k) + '" y="' + (cy + 8 * k) + '" text-anchor="middle" font-family="' + FONT + '" font-size="' + (23 * k) + '" font-weight="900" fill="' + pal.circFg + '">' + r.no + '</text>');
+      // 写真（帯の高さいっぱい）
+      const ar = rh / 2 - 3 * k;
+      p.push(shareAvatar(m + 106 * k, cy, ar, r.player, 'stav' + i));
+      p.push('<circle cx="' + (m + 106 * k) + '" cy="' + cy + '" r="' + ar + '" fill="none" stroke="' + accent + '" stroke-width="' + (3 * k) + '"/>');
       // 守備バッジ・背番号・名前
-      p.push('<rect x="' + (m + 122 * k) + '" y="' + (cy - 14 * k) + '" width="' + (42 * k) + '" height="' + (28 * k) + '" rx="' + (6 * k) + '" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.25)"/>');
-      p.push('<text x="' + (m + 143 * k) + '" y="' + (cy + 6 * k) + '" text-anchor="middle" font-family="' + FONT + '" font-size="' + (15 * k) + '" font-weight="bold" fill="' + statFill + '">' + (POS_EN[r.key] || '') + '</text>');
+      p.push('<rect x="' + (m + 154 * k) + '" y="' + (cy - 15 * k) + '" width="' + (44 * k) + '" height="' + (30 * k) + '" rx="' + (6 * k) + '" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.25)"/>');
+      p.push('<text x="' + (m + 176 * k) + '" y="' + (cy + 6 * k) + '" text-anchor="middle" font-family="' + FONT + '" font-size="' + (16 * k) + '" font-weight="bold" fill="' + statFill + '">' + (POS_EN[r.key] || '') + '</text>');
       if (r.player) {
-        p.push('<text x="' + (m + 180 * k) + '" y="' + (cy + 5.5 * k) + '" font-family="' + FONT + '" font-size="' + (14 * k) + '" font-weight="bold" fill="' + subFill + '">#' + esc(r.player.number) + '</text>');
+        p.push('<text x="' + (m + 214 * k) + '" y="' + (cy + 6 * k) + '" font-family="' + FONT + '" font-size="' + (15 * k) + '" font-weight="bold" fill="' + subFill + '">#' + esc(r.player.number) + '</text>');
       }
-      p.push('<text x="' + (m + 234 * k) + '" y="' + (cy + 8.5 * k) + '" font-family="' + FONT + '" font-size="' + (25 * k) + '" font-weight="900" fill="' + nameFill + '"' +
+      p.push('<text x="' + (m + 274 * k) + '" y="' + (cy + 11 * k) + '" font-family="' + FONT + '" font-size="' + (31 * k) + '" font-weight="900" fill="' + nameFill + '"' +
         (r.player ? '' : ' opacity="0.5"') + '>' + esc(r.player ? displayName(r.player) : '未設定') + '</text>');
-      // 投手成績は名前の横の空きスペースへ
       if (r.key === 'P' && s && s.era !== undefined) {
+        // 投手成績は名前の横のスペースに右揃えで
         const rec = s.w + '勝' + s.l + '敗' + (s.sv > 0 ? s.sv + 'S' : '');
-        p.push('<text x="' + (m + 470 * k) + '" y="' + (cy + 6.5 * k) + '" font-family="' + FONT + '" font-size="' + (18 * k) + '" font-weight="bold" fill="' + (barLight ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.75)') + '">防御率 ' + s.era + '・' + rec + '</text>');
+        p.push('<text x="' + badgeRight + '" y="' + (cy + 6 * k) + '" text-anchor="end" font-family="' + FONT + '" font-size="' + (17 * k) + '" font-weight="bold" fill="' + (barLight ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.75)') + '">防御率 ' + s.era + '・' + rec + '</text>');
+      } else if (r.key !== 'P') {
+        // 打線内トップの金バッジ（右寄せ）
+        const tags = [];
+        if (best.avg === r.key) tags.push('打率1位');
+        if (best.hr === r.key) tags.push('本塁打1位');
+        if (best.rbi === r.key) tags.push('打点1位');
+        if (best.ops === r.key) tags.push('OPS1位');
+        if (tags.length) {
+          const widths = tags.map(t => (t.length * 14 + 22) * k);
+          let tx = badgeRight - widths.reduce((a, b) => a + b + 10 * k, -10 * k);
+          tags.forEach((t, j) => {
+            p.push('<rect x="' + tx + '" y="' + (cy - 15 * k) + '" width="' + widths[j] + '" height="' + (30 * k) + '" rx="' + (15 * k) + '" fill="rgba(255,196,45,0.14)" stroke="#ffc44d"/>');
+            p.push('<text x="' + (tx + widths[j] / 2) + '" y="' + (cy + 5.5 * k) + '" text-anchor="middle" font-family="' + FONT + '" font-size="' + (14 * k) + '" font-weight="900" fill="#ffd97a">' + t + '</text>');
+            tx += widths[j] + 10 * k;
+          });
+        }
       }
       // 打撃成績（DHありの投手は打席に立たないので—。打席がない選手も—）
       const dash = (state.dh && r.no === 'P') || !s || s.avg === undefined;
       const vals = dash ? ['—', '—', '—', '—'] : [s.avg, String(s.hr), String(s.rbi), s.ops];
       [[vals[0], cAvg], [vals[1], cHr], [vals[2], cRbi], [vals[3], cOps]].forEach(c =>
-        p.push('<text x="' + c[1] + '" y="' + (cy + 8 * k) + '" text-anchor="end" font-family="' + FONT + '" font-size="' + (23 * k) + '" font-weight="900" fill="' + statFill + '"' +
+        p.push('<text x="' + c[1] + '" y="' + (cy + 9 * k) + '" text-anchor="end" font-family="' + FONT + '" font-size="' + (25 * k) + '" font-weight="900" fill="' + statFill + '"' +
           (dash ? ' opacity="0.35"' : '') + '>' + c[0] + '</text>'));
     });
 
-    // フッター
-    const fBase = H - 22 * k;
-    p.push(logoSvg(m, fBase - 27 * k, 32 * k));
-    p.push('<text x="' + (m + 42 * k) + '" y="' + fBase + '" font-family="' + FONT + '" font-size="' + (18 * k) + '" font-weight="bold" letter-spacing="' + (3 * k) + '" fill="#8b98a5">SQUAD NINE</text>');
-    if (window.NPB_STATS && window.NPB_STATS.updated) {
-      p.push('<text x="' + (W / 2) + '" y="' + fBase + '" text-anchor="middle" font-family="' + FONT + '" font-size="' + (13 * k) + '" fill="#5d6a77">成績は ' + window.NPB_STATS.updated + ' 時点</text>');
-    }
+    // フッター（成績の時点表記は出さない）
+    const fBase = H - 14 * k;
+    p.push(logoSvg(m, fBase - 22 * k, 26 * k));
+    p.push('<text x="' + (m + 34 * k) + '" y="' + fBase + '" font-family="' + FONT + '" font-size="' + (15 * k) + '" font-weight="bold" letter-spacing="' + (2 * k) + '" fill="#8b98a5">SQUAD NINE</text>');
     if (SHARE_SITE) {
-      p.push('<text x="' + (W - m) + '" y="' + fBase + '" text-anchor="end" font-family="' + FONT + '" font-size="' + (15 * k) + '" font-weight="bold" fill="#ff6b2c">' + esc(SHARE_SITE) + '</text>');
+      p.push('<text x="' + rowR + '" y="' + fBase + '" text-anchor="end" font-family="' + FONT + '" font-size="' + (14 * k) + '" font-weight="bold" fill="#ff6b2c">' + esc(SHARE_SITE) + '</text>');
     }
     return '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + W +
       '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">' + p.join('') + '</svg>';
