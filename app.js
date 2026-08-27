@@ -1288,7 +1288,7 @@
   //   { id: 'sq', label: '正方形', note: '1:1', w: 1080, h: 1080 },
   //   { id: 'story', label: 'ストーリーズ', note: '9:16', w: 1080, h: 1920 }
   const SHARE_PRESETS = [
-    { id: 'x', label: 'X (Twitter)', note: '16:9', w: 1920, h: 1080 }
+    { id: 'x', label: 'X (Twitter)', note: '4:3', w: 1440, h: 1080 }
   ];
   const FONT = "'Yu Gothic','Hiragino Kaku Gothic ProN','Noto Sans JP','Meiryo',sans-serif";
   let sharePreset = SHARE_PRESETS[0];
@@ -1529,7 +1529,9 @@
     if (state.dh) rows.push({ no: 'P', key: 'P', player: playerAt('P') });
     const n = rows.length;
     const cAvg = 1140 * k, cHr = 1280 * k, cRbi = 1400 * k, cOps = 1532 * k;
-    const rh = (n === 10 ? 68 : 75) * k, gap = (n === 10 ? 3 : 4) * k, top = 142 * k;
+    // 行の高さは縦の残り空間を使い切る（縦横比が変わっても行が伸縮して埋まる）
+    const top = 142 * k, gap = 4 * k;
+    const rh = (H - top - 60 * k - (n - 1) * gap) / n;
     const badgeRight = 1050 * k;   // バッジ・投手成績の右端（打率列の手前）
     [['打率', cAvg], ['本塁打', cHr], ['打点', cRbi], ['OPS', cOps]].forEach(c =>
       p.push('<text x="' + c[1] + '" y="' + (top - 10 * k) + '" text-anchor="end" font-family="' + FONT + '" font-size="' + (14 * k) + '" font-weight="bold" fill="#8b98a5">' + c[0] + '</text>'));
