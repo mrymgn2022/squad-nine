@@ -77,19 +77,22 @@
   }
 
   // 球団別パレット（共有画像の打順バー等）: bar=帯 fg=帯上の文字 circ=番号丸 circFg=番号
+  // 公式ロゴのカラーコード準拠（参考: baseball-89.com/npb-color-code-list）。
+  // 定石: 濃色をベースに、明るい色（黄・金・水色）は差し色。黄系ベースの球団（阪神・SB）は
+  // ユニフォーム同様の黒ベース＋黄差し色にする
   const TEAM_PALETTES = {
-    g:  { bar: '#f97709', fg: '#ffffff', circ: '#ffffff', circFg: '#d95f00' },
-    t:  { bar: '#141414', fg: '#ffe201', circ: '#ffe201', circFg: '#141414' },
-    db: { bar: '#0055a5', fg: '#ffffff', circ: '#ffffff', circFg: '#0055a5' },
-    c:  { bar: '#cf1126', fg: '#ffffff', circ: '#ffffff', circFg: '#cf1126' },
-    s:  { bar: '#0a3260', fg: '#ffffff', circ: '#a6ce39', circFg: '#0a3260' },
-    d:  { bar: '#003595', fg: '#ffffff', circ: '#ffffff', circFg: '#003595' },
-    h:  { bar: '#f3c108', fg: '#171310', circ: '#171310', circFg: '#f3c108' },
-    f:  { bar: '#0b3e66', fg: '#ffffff', circ: '#c8a86a', circFg: '#0b3e66' },
-    m:  { bar: '#17191d', fg: '#ffffff', circ: '#c0c5cc', circFg: '#17191d' },
-    e:  { bar: '#a3121f', fg: '#ffffff', circ: '#ffffff', circFg: '#a3121f' },
-    b:  { bar: '#132238', fg: '#ffffff', circ: '#b69a6a', circFg: '#132238' },
-    l:  { bar: '#15347a', fg: '#ffffff', circ: '#ffffff', circFg: '#15347a' },
+    g:  { bar: '#f27900', fg: '#ffffff', circ: '#ffffff', circFg: '#f27900' },   // 巨人: オレンジ×白
+    t:  { bar: '#000000', fg: '#f7e14c', circ: '#f7e14c', circFg: '#000000' },   // 阪神: 黒×黄
+    db: { bar: '#19418a', fg: '#ffffff', circ: '#ffffff', circFg: '#19418a' },   // DeNA: 青×白
+    c:  { bar: '#da3630', fg: '#ffffff', circ: '#ffffff', circFg: '#da3630' },   // 広島: 赤×白
+    s:  { bar: '#001444', fg: '#ffffff', circ: '#e40028', circFg: '#ffffff' },   // ヤクルト: 紺×赤
+    d:  { bar: '#17317d', fg: '#ffffff', circ: '#16b3eb', circFg: '#17317d' },   // 中日: 紺×ドラゴンズブルー
+    h:  { bar: '#1a1a1a', fg: '#f3c945', circ: '#f3c945', circFg: '#1a1a1a' },   // SB: 黒×黄（黒ベース指定）
+    f:  { bar: '#275b91', fg: '#ffffff', circ: '#ffffff', circFg: '#275b91' },   // 日本ハム: 青×白
+    m:  { bar: '#000000', fg: '#ffffff', circ: '#efefef', circFg: '#000000' },   // ロッテ: 黒×シルバー
+    e:  { bar: '#7c1718', fg: '#ffffff', circ: '#e9a93e', circFg: '#7c1718' },   // 楽天: クリムゾン×ゴールド
+    b:  { bar: '#00011f', fg: '#ffffff', circ: '#b3ab2d', circFg: '#00011f' },   // オリックス: 濃紺×ゴールド
+    l:  { bar: '#092048', fg: '#ffffff', circ: '#ffffff', circFg: '#092048' },   // 西武: 紺×白
     brand: { bar: '#ff6b2c', fg: '#16100b', circ: '#16100b', circFg: '#ff6b2c' }
   };
 
