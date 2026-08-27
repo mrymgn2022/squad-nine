@@ -81,11 +81,11 @@
   // 定石: 濃色をベースに、明るい色（黄・金・水色）は差し色。黄系ベースの球団（阪神・SB）は
   // ユニフォーム同様の黒ベース＋黄差し色にする
   const TEAM_PALETTES = {
-    g:  { bar: '#f27900', fg: '#ffffff', circ: '#ffffff', circFg: '#f27900' },   // 巨人: オレンジ×白
+    g:  { bar: '#000000', fg: '#f27900', circ: '#f27900', circFg: '#000000' },   // 巨人: 黒×オレンジ
     t:  { bar: '#000000', fg: '#f7e14c', circ: '#f7e14c', circFg: '#000000' },   // 阪神: 黒×黄
     db: { bar: '#19418a', fg: '#ffffff', circ: '#ffffff', circFg: '#19418a' },   // DeNA: 青×白
     c:  { bar: '#da3630', fg: '#ffffff', circ: '#ffffff', circFg: '#da3630' },   // 広島: 赤×白
-    s:  { bar: '#001444', fg: '#ffffff', circ: '#e40028', circFg: '#ffffff' },   // ヤクルト: 紺×赤
+    s:  { bar: '#001444', fg: '#ffffff', circ: '#00a051', circFg: '#ffffff' },   // ヤクルト: 紺×スワローズグリーン(燕パワー #00a051)
     d:  { bar: '#17317d', fg: '#ffffff', circ: '#16b3eb', circFg: '#17317d' },   // 中日: 紺×ドラゴンズブルー
     h:  { bar: '#1a1a1a', fg: '#f3c945', circ: '#f3c945', circFg: '#1a1a1a' },   // SB: 黒×黄（黒ベース指定）
     f:  { bar: '#275b91', fg: '#ffffff', circ: '#ffffff', circFg: '#275b91' },   // 日本ハム: 青×白
