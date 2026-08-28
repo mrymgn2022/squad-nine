@@ -1,0 +1,51 @@
+# 成績データの毎日自動更新
+#
+# 仕組み: 毎日 JST 11:00 に NPB公式から全選手の成績を取得し、
+# 差分があるときだけ data/npb-stats.js をコミットする。
+# 前日に試合がなければ成績は変わらない＝差分ゼロで自動スキップされるため、
+# 「月曜は基本休みだが祝日・振替・CS・日本シリーズは開催あり」といった
+# カレンダー例外を一切気にしなくてよい。
+#
+# ▼ 稼働開始の手順（ローンチ時）: 下の schedule 2行のコメントを外すだけ
+# ▼ 停止: 2行をコメントに戻す（オフシーズンは差分が出ないので放置でも実害なし）
+# ※ GitHub Actions の cron は数分〜15分ほど遅れることがある（11:00 ごろに実行される）
+# ※ リポジトリに60日間コミットがないと schedule は自動停止される点に注意
+
+name: update-stats
+
+on:
+  # schedule:
+  #   - cron: '0 2 * * *'   # JST 11:00 (= UTC 02:00)
+  workflow_dispatch:         # 手動実行（テスト用）はいつでも可能
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Tokyo
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: NPB公式サイトから成績を取得
+        shell: pwsh
+        run: |
+          $year = (Get-Date).Year
+          Write-Host "対象シーズン: $year"
+          pwsh -File tools/fetch-stats.ps1 -Year $year
+
+      - name: 差分があればコミット（試合がなかった日はスキップ）
+        run: |
+          git config user.name "squad-nine-bot"
+          git config user.email "gen-murayama@alfaras.jp"
+          git add data/npb-stats.js
+          # updated: の日付行だけの変化は「差分なし」とみなす
+          if git diff --cached -I "updated:" --quiet; then
+            echo "成績に変化なし（前日は試合なし）。コミットをスキップ"
+            git reset
+          else
+            git commit -m "成績データ自動更新 $(date +%Y-%m-%d)"
+            git push
+          fi
